@@ -4,6 +4,12 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from scipy.stats import beta
 from scipy.special import logit
+from IPython.core.debugger import set_trace
+
+
+def data_pdb(data):
+    set_trace()
+    return data
 
 
 def woe_line(df, feature, target, num_buck=10):
@@ -19,15 +25,17 @@ def woe_line(df, feature, target, num_buck=10):
       num_buck: int
         количество бакетов
     """
-    df = df.loc[:, [feature, target]].dropna()
+    df = df[[feature, target]].dropna()
 
     df_agg = (
-     df.assign(bucket=lambda x: pd.qcut(x[feature], q=num_buck, duplicates='drop'))
-        # Считаем агрегаты
-       .assign(obj_count=1)
+     df.assign(bucket=lambda x: pd.qcut(x[feature], q=num_buck, 
+                                        duplicates='drop'),
+               obj_count=1)
        .groupby('bucket', as_index=False)
        .agg({target: 'sum', 'obj_count': 'sum', feature: 'mean'})
-       .rename(columns={target: 'target_count', feature: 'feature'})
+       .dropna()
+       # .pipe(data_pdb)
+       .rename(columns={target: 'target_count'})
        .assign(obj_total=lambda x: x['obj_count'].sum(),
                target_total=lambda x: x['target_count'].sum())
        .assign(obj_rate=lambda x: x['obj_count'] / x['obj_total'],
@@ -39,25 +47,46 @@ def woe_line(df, feature, target, num_buck=10):
        .assign(woe_u=lambda x: x['woe_hi'] - x['woe'],
                woe_b=lambda x: x['woe'] - x['woe_lo'])
         # Оставляем только нужные поля
-       .loc[:, ['feature', 'obj_count', 'target_rate', 'woe', 'woe_u', 'woe_b']]
+       .loc[:, [feature, 'obj_count', 'target_rate', 'woe', 'woe_u', 'woe_b']]
     )
 
     # Logistic interpolation
     clf = LogisticRegression(C=1)
     clf.fit(df[[feature]], df[target])
     df_agg['logreg'] = (
-        logit(clf.predict_proba(df_agg[['feature']])[:, 1])
+        logit(clf.predict_proba(df_agg[[feature]])[:, 1])
       - logit(df[target].mean())
     )
 
-    # сonvert to holoviews data
-    data = hv.Dataset(df_agg, kdims=['feature'], vdims='obj_count target_rate woe woe_u woe_b logreg'.split())
-    # diagramms
-    scatter = data.to.scatter('feature', ['woe', 'obj_count', 'target_rate'])
-    errors = data.to.errorbars(vdims=['woe', 'woe_u', 'woe_b'])
-    line = data.to.curve(vdims='logreg')
+    # diagrams
+    scatter = hv.Scatter(
+        data=df_agg,
+        kdims=[feature],
+        vdims=['woe'],
+        group='Weight of evidence',
+        label=feature
+    ).opts(plot=dict(show_legend=False))
+    errors = hv.ErrorBars(
+        data=df_agg,
+        kdims=[feature],
+        vdims=['woe', 'woe_u', 'woe_b'],
+        group='Confident Intervals',
+        label=feature
+    ).opts(plot=dict(show_legend=False))
+    line = hv.Curve(
+        data=df_agg,
+        kdims=[feature],
+        vdims=['logreg'],
+        group='Logistic interpolations',
+        label=feature
+    ).opts(plot=dict(show_legend=False))
+    diagram = hv.Overlay(
+        items=[scatter, errors, line],
+        group='Woe line',
+        label=feature
+    )
 
-    return hv.Overlay([scatter, errors, line], group=feature)
+    return diagram
 
 
 def woe(tr, tr_all):
