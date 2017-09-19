@@ -3,7 +3,7 @@ import doctest
 import numpy as np
 import pandas as pd
 
-from risksutils.visualization import woe_line, woe_stab
+from risksutils.visualization import woe_line, woe_stab, InterIsoReg
 
 
 class WoeLineTests(unittest.TestCase):
@@ -61,6 +61,34 @@ class WoeStabTests(unittest.TestCase):
         self.assertEqual(
             repr(woe_curves.table().data['woe'].values),
             'array([-0.69314718, -0.69314718,  0.69314718,  0.69314718])')
+
+
+class InteactiveIsotonicTests(unittest.TestCase):
+
+    def setUp(self):
+        import holoviews as hv
+        hv.extension('matplotlib')
+
+    def test_simple_plot(self):
+        n = 100
+        np.random.seed(42)
+
+        predict = np.linspace(0, 1, n)
+        target = np.random.binomial(1, predict)
+
+        df = pd.DataFrame({
+            'predict': predict,
+            'target': target
+        })
+
+        diagram = InterIsoReg(df, pdims=['predict'], tdims=['target'])
+
+        self.assertEqual(repr(diagram.isotonic),
+                         ':DynamicMap   [predict,target]')
+        self.assertEqual(repr(diagram.isotonic[('predict', 'target')]),
+            (':Overlay\n'
+             '   .Area.I  :Area   [pred]   (ci_l,ci_h)\n'
+             '   .Curve.I :Curve   [pred]   (isotonic)'))
 
 
 if __name__ == '__main__':
