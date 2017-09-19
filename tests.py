@@ -3,7 +3,7 @@ import doctest
 import numpy as np
 import pandas as pd
 
-from risksutils import woe
+from risksutils.visualization import woe_line, woe_stab
 
 
 class WoeLineTests(unittest.TestCase):
@@ -17,7 +17,7 @@ class WoeLineTests(unittest.TestCase):
         target = np.array([0, 1, 0, 1, 0, 1])
         df = pd.DataFrame({'foo': feature,
                            'bar': target})
-        graphics = woe.woe_line(df, 'foo', 'bar', num_buck=2)
+        graphics = woe_line(df, 'foo', 'bar', num_buck=2)
         expected_result = (
             ':Overlay\n'
             '   .Weight_of_evidence.Foo      :Scatter   [foo]   (woe)\n'
@@ -34,8 +34,8 @@ class WoeLineTests(unittest.TestCase):
         target = np.array([0, 1, 0, 1, 0, 1, 1, float('nan')])
         df = pd.DataFrame({'foo': feature,
                            'bar': target})
-        s1, _, _ = woe.woe_line(df, 'foo', 'bar', num_buck=2)
-        s2, _, _ = woe.woe_line(df.dropna(), 'foo', 'bar', num_buck=2)
+        s1, _, _ = woe_line(df, 'foo', 'bar', num_buck=2)
+        s2, _, _ = woe_line(df.dropna(), 'foo', 'bar', num_buck=2)
         self.assertTrue(all(s1.data == s2.data))
 
 class WoeStabTests(unittest.TestCase):
@@ -47,8 +47,7 @@ class WoeStabTests(unittest.TestCase):
             'dt' : (  [pd.datetime(2015, 1, 1)] * 6
                     + [pd.datetime(2015, 2, 1)] * 6)
         })
-        graphics = woe.woe_stab(df, feature='foo', target='bar',
-                                date='dt', num_buck=2)
+        graphics = woe_stab(df, 'foo', 'bar', 'dt', 2)
         expected_result = (
             ':Overlay\n'
             '   .NdOverlay.I  :NdOverlay   [bucket]\n'
@@ -65,4 +64,5 @@ class WoeStabTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    doctest.testmod(woe, verbose=True)
+    import risksutils.visualization.woe
+    doctest.testmod(risksutils.visualization.woe, verbose=True)
