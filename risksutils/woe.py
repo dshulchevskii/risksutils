@@ -4,12 +4,6 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from scipy.stats import beta
 from scipy.special import logit
-from IPython.core.debugger import set_trace
-
-
-def data_pdb(data):
-    set_trace()
-    return data
 
 
 def woe_line(df, feature, target, num_buck=10):
@@ -24,17 +18,18 @@ def woe_line(df, feature, target, num_buck=10):
         название целевой переменной
       num_buck: int
         количество бакетов
+
+    Результат:
+      scatter * errors * line: hv.holoviews.Overlay
     """
     df = df[[feature, target]].dropna()
 
     df_agg = (
-     df.assign(bucket=lambda x: pd.qcut(x[feature], q=num_buck, 
-                                        duplicates='drop'),
+     df.assign(bucket=lambda x: pd.qcut(x[feature], q=num_buck, duplicates='drop'),
                obj_count=1)
        .groupby('bucket', as_index=False)
        .agg({target: 'sum', 'obj_count': 'sum', feature: 'mean'})
        .dropna()
-       # .pipe(data_pdb)
        .rename(columns={target: 'target_count'})
        .assign(obj_total=lambda x: x['obj_count'].sum(),
                target_total=lambda x: x['target_count'].sum())
@@ -87,6 +82,56 @@ def woe_line(df, feature, target, num_buck=10):
     )
 
     return diagram
+
+
+def woe_stab(df, feature, target, date, num_buck=10, date_freq='MS'):
+    """График стабильности WoE признака по времени
+
+    Аргументы:
+      df: pd.DataFrame
+        таблица с данными
+      feature: str
+        название признака
+      target: str
+        название целевой переменной
+      date: str
+        название поля со временем
+      num_buck: int
+        количество бакетов
+      date_ferq: str
+        Тип агрегации времени (по умолчанию 'MS' - начало месяца)
+
+    Результат:
+      curves * spreads: holoviews.Overlay
+    """
+
+    df_agg = (
+          df.loc[lambda x: x[[date, target]].notnull().all(axis=1)]
+            .loc[:, [feature, target, date]]
+            .assign(bucket=lambda x: pd.qcut(x[feature], q=num_buck, duplicates='drop'),
+                    obj_count=1)
+            .groupby(['bucket', pd.TimeGrouper(key=date, freq=date_freq)])
+            .agg({target: 'sum', 'obj_count': 'sum'})
+            .reset_index()
+            .assign(obj_total=lambda x:  (x.groupby(pd.TimeGrouper(key=date, freq=date_freq))['obj_count'].transform('sum')),
+                    target_total=lambda x: (x.groupby(pd.TimeGrouper(key=date, freq=date_freq))[target].transform('sum')))
+            .assign(obj_rate=lambda x: x['obj_count'] / x['obj_total'],
+                    target_rate=lambda x: x[target] / x['obj_count'],
+                    target_rate_total=lambda x: x['target_total'] / x['obj_total'])
+            .assign(woe=lambda x: woe(x['target_rate'], x['target_rate_total']),
+                    woe_lo=lambda x: woe_ci(x[target], x['obj_count'], x['target_rate_total'])[0],
+                    woe_hi=lambda x: woe_ci(x[target], x['obj_count'], x['target_rate_total'])[1])
+            .assign(woe_u=lambda x: x['woe_hi'] - x['woe'],
+                    woe_b=lambda x: x['woe'] - x['woe_lo'])
+    )
+
+    data = hv.Dataset(df_agg, kdims=['bucket', date], vdims=['woe', 'woe_b', 'woe_u'])
+    confident_intervals = (data.to.spread(kdims=[date], vdims=['woe', 'woe_b', 'woe_u'])
+                               .overlay('bucket'))
+    woe_curves = (data.to.curve(kdims=[date], vdims=['woe'])
+                      .overlay('bucket'))
+
+    return confident_intervals * woe_curves
 
 
 def woe(tr, tr_all):

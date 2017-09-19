@@ -38,6 +38,30 @@ class WoeLineTests(unittest.TestCase):
         s2, _, _ = woe.woe_line(df.dropna(), 'foo', 'bar', num_buck=2)
         self.assertTrue(all(s1.data == s2.data))
 
+class WoeStabTests(unittest.TestCase):
+
+    def test_simple_plot(self):
+        df = pd.DataFrame({
+            'foo': [1, 1, 1, 2, 2, 2] * 2,
+            'bar': [0, 1, 0, 1, 0, 1] * 2,
+            'dt' : (  [pd.datetime(2015, 1, 1)] * 6
+                    + [pd.datetime(2015, 2, 1)] * 6)
+        })
+        graphics = woe.woe_stab(df, feature='foo', target='bar',
+                                date='dt', num_buck=2)
+        expected_result = (
+            ':Overlay\n'
+            '   .NdOverlay.I  :NdOverlay   [bucket]\n'
+            '      :Spread   [dt]   (woe,woe_b,woe_u)\n'
+            '   .NdOverlay.II :NdOverlay   [bucket]\n'
+            '      :Curve   [dt]   (woe)'
+        )
+        self.assertTrue(repr(graphics), expected_result)
+        ci, woe_curves = graphics
+        self.assertEqual(
+            repr(woe_curves.table().data['woe'].values),
+            'array([-0.69314718, -0.69314718,  0.69314718,  0.69314718])')
+
 
 if __name__ == '__main__':
     unittest.main()
