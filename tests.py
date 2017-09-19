@@ -27,7 +27,7 @@ class WoeLineTests(unittest.TestCase):
         self.assertEqual(repr(graphics), expected_result)
         scatter, _, _ = graphics
         self.assertEqual(repr(scatter.data.woe.values),
-                          'array([-0.69314718,  0.69314718])')
+                         'array([-0.69314718,  0.69314718])')
 
     def test_missing_values(self):
         feature = np.array([1, 1, 1, 2, 2, 2, float('nan'), 1])
@@ -38,14 +38,15 @@ class WoeLineTests(unittest.TestCase):
         s2, _, _ = woe_line(df.dropna(), 'foo', 'bar', num_buck=2)
         self.assertTrue(all(s1.data == s2.data))
 
+
 class WoeStabTests(unittest.TestCase):
 
     def test_simple_plot(self):
         df = pd.DataFrame({
             'foo': [1, 1, 1, 2, 2, 2] * 2,
             'bar': [0, 1, 0, 1, 0, 1] * 2,
-            'dt' : (  [pd.datetime(2015, 1, 1)] * 6
-                    + [pd.datetime(2015, 2, 1)] * 6)
+            'dt': ([pd.datetime(2015, 1, 1)] * 6 +
+                   [pd.datetime(2015, 2, 1)] * 6)
         })
         graphics = woe_stab(df, 'foo', 'bar', 'dt', 2)
         expected_result = (
@@ -63,6 +64,6 @@ class WoeStabTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
     import risksutils.visualization.woe
-    doctest.testmod(risksutils.visualization.woe, verbose=True)
+    doctest.testmod(risksutils.visualization.woe)
+    unittest.main()

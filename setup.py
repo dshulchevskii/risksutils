@@ -14,5 +14,7 @@ setup(
         'numpy>=1.13.1',
         'scikit-learn>=0.19.0',
         'scipy>=0.19.0',
+        'matplotlib>=2.0.2',
+        'bokeh>=0.12.6',
     ]
 )
