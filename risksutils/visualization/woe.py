@@ -20,7 +20,7 @@ def woe_line(df, feature, target, num_buck=10):
         количество бакетов
 
     Результат:
-      scatter * errors * line: hv.holoviews.Overlay
+      scatter * errors * line: holoviews.Overlay
     """
     df = df[[feature, target]].dropna()
 
