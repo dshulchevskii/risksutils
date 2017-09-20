@@ -142,9 +142,12 @@ class InterIsoReg():
 
             if self._calibrations_data is not None:
                 if target in self.calibrations.columns:
-                    calibr_curve = hv.Curve(self.calibrations,
-                                            kdims=['pred'], vdims=[target])
-                    return confident_intervals * curve * calibr_curve
+                    calibr = hv.Curve(
+                      data=self.calibrations[['pred', target]].values,
+                      kdims=['pred'],
+                      vdims=['target']
+                    )
+                    return confident_intervals * curve * calibr
 
             return confident_intervals * curve
 
@@ -177,7 +180,8 @@ class InterIsoReg():
 def isotonic_plot_data(df, target, predict):
     """Подготавливаем данные для рисования Isotonic диаграммы"""
     reg = IsotonicRegression()
-    return (df[[predict, target]]                  # выбираем только два поля
+    return (df[[predict, target]]                 # выбираем только два поля
+             .dropna()                            # оставляем только непустые
              .rename(columns={predict: 'pred',
                               target: 'target'})  # меняем их названия
              .assign(isotonic=lambda df:          # значение прогноза IR
