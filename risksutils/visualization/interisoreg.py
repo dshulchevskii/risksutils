@@ -12,7 +12,8 @@ Plot = namedtuple('Plot', ['selector', 'diagram'])
 class InterIsoReg():
     """Интерактивная визуализация точности прогноза вероятности"""
 
-    def __init__(self, data, pdims, tdims, ddims=None, gdims=None):
+    def __init__(self, data, pdims, tdims, ddims=None, gdims=None,
+                 calibrations_data=None):
         """Интерактивная визуализация точности прогноза вероятности
 
         Аргументы:
@@ -36,7 +37,9 @@ class InterIsoReg():
         self._tdims = tdims
         self._gdims = gdims
         self._ddims = ddims
+        self._calibrations_data = calibrations_data
         self._check_fields()        # Проверяем форматы полей
+        self._load_calibrations()   # загружаем калибровки, если они есть
         self._diagrams = {}         # Здесь будем хранить диаграммы
         self._make_bars_static()    # Создаем диаграммы с категориями
         self._make_area_static()    # С датами
@@ -129,7 +132,6 @@ class InterIsoReg():
         selectors = [s for s, d in self._diagrams.values()]
 
         def chart(target, predict, **kwargs):
-
             condisions = self._conditions(**kwargs)
             data = self.data.loc[condisions]
             df = isotonic_plot_data(data, target, predict)
@@ -137,10 +139,23 @@ class InterIsoReg():
                                            vdims=['ci_l', 'ci_h'])
                                      .opts(style=dict(alpha=0.5)))
             curve = hv.Curve(df, kdims=['pred'], vdims=['isotonic'])
+
+            if self._calibrations_data is not None:
+                if target in self.calibrations.columns:
+                    calibr_curve = hv.Curve(self.calibrations,
+                                            kdims=['pred'], vdims=[target])
+                    return confident_intervals * curve * calibr_curve
+
             return confident_intervals * curve
 
         iso_chart = hv.DynamicMap(chart, kdims=kdims, streams=selectors)
         self.__dict__['isotonic'] = iso_chart
+
+    def _load_calibrations(self):
+        if isinstance(self._calibrations_data, str):
+            self.calibrations = pd.read_csv(self._calibrations_data)
+        elif isinstance(self._calibrations_data, pd.DataFrame):
+            self.calibrations = self._calibrations_data
 
     def _check_fields(self):
         """Проверяльщик формата"""
