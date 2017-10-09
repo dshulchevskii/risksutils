@@ -1,0 +1,8 @@
+[MESSAGE CONTROL]
+disable=missing-docstring,too-many-arguments,too-many-instance-attributes,too-few-public-methods,len-as-condition,no-name-in-module
+
+# Good variable names which should always be accepted, separated by a comma
+good-names=i,j,k,n,lo,hi,t,tr,df
+
+[TYPECHECK]
+ignored-modules = numpy*

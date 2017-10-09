@@ -18,12 +18,11 @@ class WoeLineTests(unittest.TestCase):
         df = pd.DataFrame({'foo': feature,
                            'bar': target})
         graphics = woe_line(df, 'foo', 'bar', num_buck=2)
-        expected_result = (
-            ':Overlay\n'
-            '   .Weight_of_evidence.Foo      :Scatter   [foo]   (woe)\n'
-            '   .Confident_Intervals.Foo     :ErrorBars   [foo]   (woe,woe_u,woe_b)\n'
-            '   .Logistic_interpolations.Foo :Curve   [foo]   (logreg)'
-        )
+        expected_result = """:Overlay
+   .Weight_of_evidence.Foo      :Scatter   [foo]   (woe)
+   .Confident_Intervals.Foo     :ErrorBars   [foo]   (woe,woe_u,woe_b)
+   .Logistic_interpolations.Foo :Curve   [foo]   (logreg)"""
+
         self.assertEqual(repr(graphics), expected_result)
         scatter, _, _ = graphics
         self.assertEqual(repr(scatter.data.woe.values),
@@ -34,9 +33,9 @@ class WoeLineTests(unittest.TestCase):
         target = np.array([0, 1, 0, 1, 0, 1, 1, float('nan')])
         df = pd.DataFrame({'foo': feature,
                            'bar': target})
-        s1, _, _ = woe_line(df, 'foo', 'bar', num_buck=2)
-        s2, _, _ = woe_line(df.dropna(), 'foo', 'bar', num_buck=2)
-        self.assertTrue(all(s1.data == s2.data))
+        scatter1, _, _ = woe_line(df, 'foo', 'bar', num_buck=2)
+        scatter2, _, _ = woe_line(df.dropna(), 'foo', 'bar', num_buck=2)
+        self.assertTrue(all(scatter1.data == scatter2.data))
 
 
 class WoeStabTests(unittest.TestCase):
@@ -49,20 +48,20 @@ class WoeStabTests(unittest.TestCase):
                    [pd.datetime(2015, 2, 1)] * 6)
         })
         graphics = woe_stab(df, 'foo', 'bar', 'dt', 2)
-        expected_result = (
-            ':Overlay\n'
-            '   .NdOverlay.I  :NdOverlay   [bucket]\n'
-            '      :Spread   [dt]   (woe,woe_b,woe_u)\n'
-            '   .NdOverlay.II :NdOverlay   [bucket]\n'
-            '      :Curve   [dt]   (woe)'
-        )
+        expected_result = """:Overlay
+   .NdOverlay.I  :NdOverlay   [bucket]
+      :Spread   [dt]   (woe,woe_b,woe_u)
+   .NdOverlay.II :NdOverlay   [bucket]
+      :Curve   [dt]   (woe)"""
+
         self.assertTrue(repr(graphics), expected_result)
-        ci, woe_curves = graphics
+        _, woe_curves = graphics
         self.assertEqual(
             repr(woe_curves.table().data['woe'].values),
             'array([-0.69314718, -0.69314718,  0.69314718,  0.69314718])')
 
 
+# pylint: disable=no-member
 class InteactiveIsotonicTests(unittest.TestCase):
 
     def setUp(self):
@@ -70,10 +69,10 @@ class InteactiveIsotonicTests(unittest.TestCase):
         hv.extension('matplotlib')
 
     def test_simple_plot(self):
-        n = 100
+        num_obs = 100
         np.random.seed(42)
 
-        predict = np.linspace(0, 1, n)
+        predict = np.linspace(0, 1, num_obs)
         target = np.random.binomial(1, predict)
 
         df = pd.DataFrame({
@@ -86,9 +85,10 @@ class InteactiveIsotonicTests(unittest.TestCase):
         self.assertEqual(repr(diagram.isotonic),
                          ':DynamicMap   [predict,target]')
         self.assertEqual(repr(diagram.isotonic[('predict', 'target')]),
-            (':Overlay\n'
-             '   .Area.I  :Area   [pred]   (ci_l,ci_h)\n'
-             '   .Curve.I :Curve   [pred]   (isotonic)'))
+                         """:Overlay
+   .Area.I  :Area   [pred]   (ci_l,ci_h)
+   .Curve.I :Curve   [pred]   (isotonic)""")
+# pylint: enable=no-member
 
 
 if __name__ == '__main__':

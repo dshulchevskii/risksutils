@@ -1,12 +1,15 @@
-from setuptools import setup, find_packages
 from os.path import join, dirname
+from setuptools import setup
 import risksutils
 
 
 setup(
     name='risksutils',
     version=risksutils.__version__,
-    packages=find_packages(),
+    packages=[
+        'risksutils',
+        'risksutils/visualization',
+    ],
     long_description=open(join(dirname(__file__), 'README.rst')).read(),
     install_requires=[
         'pandas>=0.20.3',
@@ -16,5 +19,18 @@ setup(
         'scipy>=0.19.0',
         'matplotlib>=2.0.2',
         'bokeh>=0.12.6',
-    ]
+    ],
+    setup_requires=[
+        "pytest-runner",
+        "pytest-pylint",
+        "pytest-pycodestyle",
+        "pytest-pep257",
+        "pytest-cov",
+    ],
+    tests_require=[
+        "pytest",
+        "pylint",
+        "pycodestyle",
+        "pep257",
+    ],
 )
