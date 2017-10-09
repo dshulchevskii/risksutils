@@ -14,7 +14,8 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda install pandas holoviews numpy scikit scipy matplotlib bokeh
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION pandas holoviews numpy scikit scipy matplotlib bokeh
+  - source activate test-environment
 
 script:
   - python ./setup.py test
