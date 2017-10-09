@@ -25,32 +25,34 @@ def woe_line(df, feature, target, num_buck=10):
     df = df[[feature, target]].dropna()
 
     df_agg = (
-     df.assign(bucket=lambda x: pd.qcut(x[feature], q=num_buck, duplicates='drop'),
-               obj_count=1)
-       .groupby('bucket', as_index=False)
-       .agg({target: 'sum', 'obj_count': 'sum', feature: 'mean'})
-       .dropna()
-       .rename(columns={target: 'target_count'})
-       .assign(obj_total=lambda x: x['obj_count'].sum(),
-               target_total=lambda x: x['target_count'].sum())
-       .assign(obj_rate=lambda x: x['obj_count'] / x['obj_total'],
-               target_rate=lambda x: x['target_count'] / x['obj_count'],
-               target_rate_total=lambda x: x['target_total'] / x['obj_total'])
-       .assign(woe=lambda x: woe(x['target_rate'], x['target_rate_total']),
-               woe_lo=lambda x: woe_ci(x['target_count'], x['obj_count'], x['target_rate_total'])[0],
-               woe_hi=lambda x: woe_ci(x['target_count'], x['obj_count'], x['target_rate_total'])[1])
-       .assign(woe_u=lambda x: x['woe_hi'] - x['woe'],
-               woe_b=lambda x: x['woe'] - x['woe_lo'])
-        # Оставляем только нужные поля
-       .loc[:, [feature, 'obj_count', 'target_rate', 'woe', 'woe_u', 'woe_b']]
+        df.assign(bucket=lambda x: pd.qcut(x[feature], q=num_buck,
+                                           duplicates='drop'),
+                  obj_count=1)
+        .groupby('bucket', as_index=False)
+        .agg({target: 'sum', 'obj_count': 'sum', feature: 'mean'})
+        .dropna()
+        .rename(columns={target: 'target_count'})
+        .assign(obj_total=lambda x: x['obj_count'].sum(),
+                target_total=lambda x: x['target_count'].sum())
+        .assign(obj_rate=lambda x: x['obj_count'] / x['obj_total'],
+                target_rate=lambda x: x['target_count'] / x['obj_count'],
+                target_rate_total=lambda x: x['target_total'] / x['obj_total'])
+        .assign(woe=lambda x: woe(x['target_rate'], x['target_rate_total']),
+                woe_lo=lambda x: woe_ci(x['target_count'], x['obj_count'],
+                                        x['target_rate_total'])[0],
+                woe_hi=lambda x: woe_ci(x['target_count'], x['obj_count'],
+                                        x['target_rate_total'])[1])
+        .assign(woe_u=lambda x: x['woe_hi'] - x['woe'],
+                woe_b=lambda x: x['woe'] - x['woe_lo'])
+        .loc[:, [feature, 'obj_count', 'target_rate', 'woe', 'woe_u', 'woe_b']]
     )
 
     # Logistic interpolation
     clf = LogisticRegression(C=1)
     clf.fit(df[[feature]], df[target])
     df_agg['logreg'] = (
-        logit(clf.predict_proba(df_agg[[feature]])[:, 1])
-      - logit(df[target].mean())
+        logit(clf.predict_proba(df_agg[[feature]])[:, 1]) -
+        logit(df[target].mean())
     )
 
     # diagrams
@@ -106,30 +108,40 @@ def woe_stab(df, feature, target, date, num_buck=10, date_freq='MS'):
     """
 
     df_agg = (
-          df.loc[lambda x: x[[date, target]].notnull().all(axis=1)]
-            .loc[:, [feature, target, date]]
-            .assign(bucket=lambda x: pd.qcut(x[feature], q=num_buck, duplicates='drop'),
-                    obj_count=1)
-            .groupby(['bucket', pd.TimeGrouper(key=date, freq=date_freq)])
-            .agg({target: 'sum', 'obj_count': 'sum'})
-            .reset_index()
-            .assign(obj_total=lambda x:  (x.groupby(pd.TimeGrouper(key=date, freq=date_freq))['obj_count'].transform('sum')),
-                    target_total=lambda x: (x.groupby(pd.TimeGrouper(key=date, freq=date_freq))[target].transform('sum')))
-            .assign(obj_rate=lambda x: x['obj_count'] / x['obj_total'],
-                    target_rate=lambda x: x[target] / x['obj_count'],
-                    target_rate_total=lambda x: x['target_total'] / x['obj_total'])
-            .assign(woe=lambda x: woe(x['target_rate'], x['target_rate_total']),
-                    woe_lo=lambda x: woe_ci(x[target], x['obj_count'], x['target_rate_total'])[0],
-                    woe_hi=lambda x: woe_ci(x[target], x['obj_count'], x['target_rate_total'])[1])
-            .assign(woe_u=lambda x: x['woe_hi'] - x['woe'],
-                    woe_b=lambda x: x['woe'] - x['woe_lo'])
+        df.loc[lambda x: x[[date, target]].notnull().all(axis=1)]
+        .loc[:, [feature, target, date]]
+        .assign(bucket=lambda x: pd.qcut(x[feature], q=num_buck,
+                                         duplicates='drop'),
+                obj_count=1)
+        .groupby(['bucket', pd.TimeGrouper(key=date, freq=date_freq)])
+        .agg({target: 'sum', 'obj_count': 'sum'})
+        .reset_index()
+        .assign(
+            obj_total=lambda x: (
+                x.groupby(pd.TimeGrouper(key=date, freq=date_freq))
+                ['obj_count'].transform('sum')),
+            target_total=lambda x: (
+                x.groupby(pd.TimeGrouper(key=date, freq=date_freq))
+                [target].transform('sum')))
+        .assign(obj_rate=lambda x: x['obj_count'] / x['obj_total'],
+                target_rate=lambda x: x[target] / x['obj_count'],
+                target_rate_total=lambda x: x['target_total'] / x['obj_total'])
+        .assign(woe=lambda x: woe(x['target_rate'], x['target_rate_total']),
+                woe_lo=lambda x: woe_ci(x[target], x['obj_count'],
+                                        x['target_rate_total'])[0],
+                woe_hi=lambda x: woe_ci(x[target], x['obj_count'],
+                                        x['target_rate_total'])[1])
+        .assign(woe_u=lambda x: x['woe_hi'] - x['woe'],
+                woe_b=lambda x: x['woe'] - x['woe_lo'])
     )
 
-    data = hv.Dataset(df_agg, kdims=['bucket', date], vdims=['woe', 'woe_b', 'woe_u'])
-    confident_intervals = (data.to.spread(kdims=[date], vdims=['woe', 'woe_b', 'woe_u'])
-                               .overlay('bucket'))
+    data = hv.Dataset(df_agg, kdims=['bucket', date],
+                      vdims=['woe', 'woe_b', 'woe_u'])
+    confident_intervals = (data.to.spread(kdims=[date],
+                                          vdims=['woe', 'woe_b', 'woe_u'])
+                           .overlay('bucket'))
     woe_curves = (data.to.curve(kdims=[date], vdims=['woe'])
-                      .overlay('bucket'))
+                  .overlay('bucket'))
 
     return confident_intervals * woe_curves
 
