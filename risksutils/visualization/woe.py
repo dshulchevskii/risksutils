@@ -214,7 +214,7 @@ def aggregate_data_for_distribution(df, feature, date,
         .sort_values([date, 'bucket'])
         .reset_index(drop=True)
         .assign(objects_rate=lambda x:
-                x.groupby('dt').apply(
+                x.groupby(date).apply(
                     lambda y: y.obj_rate.cumsum()).reset_index(drop=True))
         .assign(obj_rate_u=0,
                 obj_rate_l=lambda x: x['obj_rate'])
@@ -222,7 +222,7 @@ def aggregate_data_for_distribution(df, feature, date,
 
 
 def make_bucket(series, num_bucket):
-    bucket = np.round(series.rank(pct=True) * num_bucket).fillna(-1)
+    bucket = np.ceil(series.rank(pct=True) * num_bucket).fillna(-1)
     agg = series.groupby(bucket).agg(['min', 'max'])
     names = agg['min'].astype(str).copy()
     names[agg['min'] != agg['max']] = ('[' + agg['min'].astype(str) +
