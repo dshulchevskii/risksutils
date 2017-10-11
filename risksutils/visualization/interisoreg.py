@@ -1,9 +1,8 @@
 from collections import namedtuple
-from sklearn.isotonic import IsotonicRegression
-from statsmodels.stats.proportion import proportion_confint
 import holoviews as hv
 import numpy as np
 import pandas as pd
+from ._static_plot import isotonic
 
 
 Plot = namedtuple('Plot', ['selector', 'diagram'])
@@ -133,22 +132,7 @@ class InterIsoReg():
         def chart(target, predict, **kwargs):
             condisions = self._conditions(**kwargs)
             data = self.data.loc[condisions]
-            df = isotonic_plot_data(data, target, predict)
-            confident_intervals = (hv.Area(df, kdims=['pred'],
-                                           vdims=['ci_l', 'ci_h'])
-                                   .opts(style=dict(alpha=0.5)))
-            curve = hv.Curve(df, kdims=['pred'], vdims=['isotonic'])
-
-            if self._calibrations_data is not None:
-                if target in self.calibrations.columns:
-                    calibr = hv.Curve(
-                        data=self.calibrations[['pred', target]].values,
-                        kdims=['pred'],
-                        vdims=['target']
-                    )
-                    return confident_intervals * curve * calibr
-
-            return confident_intervals * curve
+            return isotonic(data, predict, target, self._calibrations_data)
 
         iso_chart = hv.DynamicMap(chart, kdims=kdims, streams=selectors)
         self.__dict__['isotonic'] = iso_chart
@@ -174,51 +158,3 @@ class InterIsoReg():
             assert isinstance(dims, list), '{} must be list'.format(dims)
             for col in dims:
                 assert col in self.data.columns, '{} must be a column of data'
-
-
-def isotonic_plot_data(df, target, predict):
-    """Подготавливаем данные для рисования Isotonic диаграммы"""
-    reg = IsotonicRegression()
-    return (df[[predict, target]]                # выбираем только два поля
-            .dropna()                            # оставляем только непустые
-            .rename(columns={predict: 'pred',
-                             target: 'target'})  # меняем их названия
-            .assign(isotonic=lambda df:          # значение прогноза IR
-                    reg.fit_transform(           # обучаем и считаем прогноз.
-                        X=(df['pred'] +          # 🔫IR не работает с
-                           1e-7 * np.random.rand(len(df))),
-                        y=df['target']           # повторяющимися значениями
-                    ))                           # поэтому костыльно делаем их
-            .groupby('isotonic')                 # разными.
-            .agg({'target': ['sum', 'count'],    # Для каждого значения ir
-                  'pred': ['min', 'max']})       # агрегируем target
-            .reset_index()
-            .pipe(compute_confident_intervals)   # доверительные интервалы
-            .pipe(stack_min_max))                # Преобразуем в нужный формат
-
-
-def compute_confident_intervals(df):
-    """Добавляем в таблицу доверительные интервалы"""
-    df['ci_l'], df['ci_h'] = proportion_confint(
-        count=df['target']['sum'],
-        nobs=df['target']['count'],
-        alpha=0.05,
-        method='beta'
-    )
-    df['ci_l'] = df['ci_l'].fillna(0)
-    df['ci_h'] = df['ci_h'].fillna(1)
-    return df
-
-
-def stack_min_max(df):
-    """Перегруппировываем значения в таблице для последующего рисования"""
-    stack = (df['pred']                    # pred - Мульти Индекс,
-             .stack()                      # Каждой строчке сопоставляем
-                                           # две строчки со значениями
-             .reset_index(1, drop=True)    # для min и для max,
-             .rename('pred'))              # а потом меням название поля
-    df = pd.concat([stack, df['isotonic'],
-                    df['ci_l'], df['ci_h']], axis=1)
-    df['ci_l'] = df['ci_l'].cummax()         # Делаем границы монотонными
-    df['ci_h'] = df[::-1]['ci_h'].cummin()[::-1]
-    return df

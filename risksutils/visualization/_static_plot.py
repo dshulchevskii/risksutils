@@ -2,6 +2,8 @@ import pandas as pd
 import holoviews as hv
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+from sklearn.isotonic import IsotonicRegression
+from statsmodels.stats.proportion import proportion_confint
 from scipy.stats import beta
 from scipy.special import logit
 
@@ -10,7 +12,7 @@ def woe_line(df, feature, target, num_buck=10):
     """График зависимости WoE от признака
 
     Аргументы:
-      df: pd.DataFrame
+      df: pandas.DataFrame
         таблица с данными
       feature: str
         название признака
@@ -59,7 +61,7 @@ def woe_stab(df, feature, target, date, num_buck=10, date_freq='MS'):
     """График стабильности WoE признака по времени
 
     Аргументы:
-      df: pd.DataFrame
+      df: pandas.DataFrame
         таблица с данными
       feature: str
         название признака
@@ -98,7 +100,7 @@ def distribution(df, feature, date, num_buck=10, date_freq='MS'):
     """График изменения распределения признака по времени
 
     Аргументы:
-      df: pd.DataFrame
+      df: pandas.DataFrame
         таблица с данными
       feature: str
         название признака
@@ -125,6 +127,50 @@ def distribution(df, feature, date, num_buck=10, date_freq='MS'):
                  .overlay('bucket'))
 
     return obj_rates
+
+
+def isotonic(df, predict, target, calibrations_data=None):
+    """Визуализация точности прогноза вероятности
+
+    Аргументы:
+      df: pandas.DataFrame
+        таблица с данными
+      predict: str
+        прогнозная вероятность
+      target: str
+        бинарная (0, 1) целевая переменная
+      calibrations_data: pandas.DataFrame
+        таблица с калибровками
+
+    Результат:
+        area * curve * [curve] : holoviews.Overlay
+    """
+
+    df_agg = aggregate_data_for_isitonic(df, predict, target)
+
+    if calibrations_data is not None and target in calibrations_data.columns:
+        calibration = hv.Curve(
+            data=calibrations_data[['predict', target]].values,
+            kdims=['predict'],
+            vdims=['target'],
+            group='Calibration',
+            label='calibration'
+        )
+        show_calibration = True
+    else:
+        show_calibration = False
+
+    confident_intervals = (hv.Area(df_agg, kdims=['predict'],
+                                   vdims=['ci_l', 'ci_h'],
+                                   group='Confident Intervals',
+                                   label=predict)
+                           .opts(style=dict(alpha=0.5)))
+    curve = hv.Curve(df_agg, kdims=['predict'], vdims=['isotonic'],
+                     group='Isotonic', label=predict)
+
+    if show_calibration:
+        return curve * confident_intervals * calibration
+    return curve * confident_intervals
 
 
 def aggregate_data_for_woe_line(df, feature, target, num_buck):
@@ -263,3 +309,52 @@ def clopper_pearson(k, n, alpha=0.32):
     lo[np.isnan(lo)] = 0
     hi[np.isnan(hi)] = 1
     return lo, hi
+
+
+def aggregate_data_for_isitonic(df, predict, target):
+    """Подготавливаем данные для рисования Isotonic диаграммы"""
+    reg = IsotonicRegression()
+    return (df[[predict, target]]                # выбираем только два поля
+            .dropna()                            # оставляем только непустые
+            .rename(columns={predict: 'predict',
+                             target: 'target'})  # меняем их названия
+            .assign(isotonic=lambda df:          # значение прогноза IR
+                    reg.fit_transform(           # обучаем и считаем прогноз.
+                        X=(df['predict'] +          # 🔫IR не работает с
+                           1e-7 * np.random.rand(len(df))),
+                        y=df['target']           # повторяющимися значениями
+                    ))                           # поэтому костыльно делаем их
+            .groupby('isotonic')                 # разными.
+            .agg({'target': ['sum', 'count'],    # Для каждого значения ir
+                  'predict': ['min', 'max']})    # агрегируем target
+            .reset_index()
+            .pipe(compute_confident_intervals)   # доверительные интервалы
+            .pipe(stack_min_max))                # Преобразуем в нужный формат
+
+
+def compute_confident_intervals(df):
+    """Добавляем в таблицу доверительные интервалы"""
+    df['ci_l'], df['ci_h'] = proportion_confint(
+        count=df['target']['sum'],
+        nobs=df['target']['count'],
+        alpha=0.05,
+        method='beta'
+    )
+    df['ci_l'] = df['ci_l'].fillna(0)
+    df['ci_h'] = df['ci_h'].fillna(1)
+    return df
+
+
+def stack_min_max(df):
+    """Перегруппировываем значения в таблице для последующего рисования"""
+    stack = (df['predict']                 # predict - Мульти Индекс,
+             .stack()                      # Каждой строчке сопоставляем
+                                           # две строчки со значениями
+             .reset_index(1, drop=True)    # для min и для max,
+             .rename('predict'))           # а потом меням название поля
+    df = pd.concat([stack, df['isotonic'],
+                    df['ci_l'],
+                    df['ci_h']], axis=1)
+    df['ci_l'] = df['ci_l'].cummax()       # Делаем границы монотонными
+    df['ci_h'] = df[::-1]['ci_h'].cummin()[::-1]
+    return df

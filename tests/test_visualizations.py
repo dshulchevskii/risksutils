@@ -4,7 +4,7 @@ import numpy as np
 
 
 from risksutils.visualization import (
-    woe_stab, woe_line, InterIsoReg, distribution
+    woe_stab, woe_line, InterIsoReg, distribution, isotonic
 )
 
 
@@ -98,6 +98,36 @@ b,2015-2-1
     assert (repr(graphics.table().data['obj_rate'].values) ==
             'array([ 0.5       ,  0.5       ,  0.        ,  0.16666667,'
             '  0.5       ,\n        0.33333333])')
+
+
+def test_isotonic_simple():
+    num_obs = 100
+    np.random.seed(42)
+
+    predict = np.linspace(0, 1, num_obs)
+    target = np.random.binomial(1, predict)
+
+    df = pd.DataFrame({
+        'predict': predict,
+        'target': target
+    })
+
+    calibrations = pd.DataFrame({'predict': [0, 1], 'target': [0, 1]})
+
+    graphics = isotonic(df, 'predict', 'target')
+    graphics_clbr = isotonic(df, 'predict', 'target', calibrations)
+
+    expected_result_clbr = """:Overlay
+   .Isotonic.Predict            :Curve   [predict]   (isotonic)
+   .Confident_Intervals.Predict :Area   [predict]   (ci_l,ci_h)
+   .Calibration.Calibration     :Curve   [predict]   (target)"""
+
+    expected_result = """:Overlay
+   .Isotonic.Predict            :Curve   [predict]   (isotonic)
+   .Confident_Intervals.Predict :Area   [predict]   (ci_l,ci_h)"""
+
+    assert repr(graphics_clbr) == expected_result_clbr
+    assert repr(graphics) == expected_result
 
 
 # pylint: disable=no-member
