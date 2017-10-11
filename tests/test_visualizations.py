@@ -3,10 +3,12 @@ import pandas as pd
 import numpy as np
 
 
-from risksutils.visualization import woe_stab, woe_line, InterIsoReg
+from risksutils.visualization import (
+    woe_stab, woe_line, InterIsoReg, distribution
+)
 
 
-def test_woe_line_simple_example():
+def test_woe_line_simple():
     import holoviews as hv
     hv.extension('matplotlib')
 
@@ -18,7 +20,7 @@ foo,bar
 2,1
 2,0
 2,1
-    """
+"""
 
     df = pd.read_csv(StringIO(data))
 
@@ -35,30 +37,30 @@ foo,bar
     assert repr(scatter.data.woe.values) == 'array([-0.69314718,  0.69314718])'
 
 
-def test_woe_stab_simple_example():
+def test_woe_stab_simple():
     data = """
 foo,bar,dt
-1,0,2015-1-1
-1,1,2015-1-1
-1,0,2015-1-1
-2,1,2015-1-1
-2,0,2015-1-1
-2,1,2015-1-1
-1,0,2015-2-1
-1,1,2015-2-1
-1,0,2015-2-1
-2,1,2015-2-1
-2,0,2015-2-1
-2,1,2015-2-1
-    """
+a,0,2015-1-1
+a,1,2015-1-1
+a,0,2015-1-1
+, 1,2015-1-1
+, 0,2015-1-1
+, 1,2015-1-1
+a,0,2015-2-1
+a,1,2015-2-1
+a,0,2015-2-1
+, 1,2015-2-1
+, 0,2015-2-1
+, 1,2015-2-1
+"""
     df = pd.read_csv(StringIO(data), parse_dates=['dt'])
 
     graphics = woe_stab(df, 'foo', 'bar', 'dt', num_buck=2)
 
     expected_result = """:Overlay
-   .NdOverlay.I  :NdOverlay   [bucket]
+   .Confident_Intervals.Foo :NdOverlay   [bucket]
       :Spread   [dt]   (woe,woe_b,woe_u)
-   .NdOverlay.II :NdOverlay   [bucket]
+   .Weight_of_evidence.Foo  :NdOverlay   [bucket]
       :Curve   [dt]   (woe)"""
 
     assert repr(graphics) == expected_result
@@ -68,8 +70,38 @@ foo,bar,dt
             'array([-0.69314718, -0.69314718,  0.69314718,  0.69314718])')
 
 
+def test_distribution_simple():
+    data = """
+foo,dt
+a,2015-1-1
+a,2015-1-1
+a,2015-1-1
+, 2015-1-1
+, 2015-1-1
+, 2015-1-1
+a,2015-2-1
+a,2015-2-1
+a,2015-2-1
+b,2015-2-1
+, 2015-2-1
+, 2015-2-1
+"""
+
+    df = pd.read_csv(StringIO(data), parse_dates=['dt'])
+    graphics = distribution(df, 'foo', 'dt', num_buck=10)
+
+    expected_result = """:NdOverlay   [bucket]
+   :Spread   [dt]   (objects_rate,obj_rate_l,obj_rate_u)"""
+
+    assert repr(graphics) == expected_result
+
+    assert (repr(graphics.table().data['obj_rate'].values) ==
+            'array([ 0.5       ,  0.5       ,  0.        ,  0.16666667,'
+            '  0.5       ,\n        0.33333333])')
+
+
 # pylint: disable=no-member
-def test_inter_iso_simple_example():
+def test_inter_iso_simple():
     import holoviews as hv
     hv.extension('matplotlib')
 

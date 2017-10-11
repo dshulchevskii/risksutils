@@ -82,20 +82,56 @@ def woe_stab(df, feature, target, date, num_buck=10, date_freq='MS'):
     data = hv.Dataset(df_agg, kdims=['bucket', date],
                       vdims=['woe', 'woe_b', 'woe_u'])
     confident_intervals = (data.to.spread(kdims=[date],
-                                          vdims=['woe', 'woe_b', 'woe_u'])
+                                          vdims=['woe', 'woe_b', 'woe_u'],
+                                          group='Confident Intervals',
+                                          label=feature)
                            .overlay('bucket'))
-    woe_curves = (data.to.curve(kdims=[date], vdims=['woe'])
+    woe_curves = (data.to.curve(kdims=[date], vdims=['woe'],
+                                group='Weight of evidence',
+                                label=feature)
                   .overlay('bucket'))
 
     return confident_intervals * woe_curves
+
+
+def distribution(df, feature, date, num_buck=10, date_freq='MS'):
+    """График изменения распределения признака по времени
+
+    Аргументы:
+      df: pd.DataFrame
+        таблица с данными
+      feature: str
+        название признака
+      date: str
+        название поля со временем
+      num_buck: int
+        количество бакетов
+      date_ferq: str
+        Тип агрегации времени (по умолчанию 'MS' - начало месяца)
+
+    Результат:
+      spreads: holoviews.NdOverlay
+    """
+
+    df_agg = aggregate_data_for_distribution(df, feature, date,
+                                             num_buck, date_freq)
+
+    obj_rates = (hv.Dataset(df_agg, kdims=['bucket', date],
+                            vdims=['objects_rate', 'obj_rate_l', 'obj_rate_u'])
+                 .to.spread(kdims=[date],
+                            vdims=['objects_rate', 'obj_rate_l', 'obj_rate_u'],
+                            group='Objects rate',
+                            label=feature)
+                 .overlay('bucket'))
+
+    return obj_rates
 
 
 def aggregate_data_for_woe_line(df, feature, target, num_buck):
     df = df[[feature, target]].dropna()
 
     df_agg = (
-        df.assign(bucket=lambda x: pd.qcut(x[feature], q=num_buck,
-                                           duplicates='drop'),
+        df.assign(bucket=lambda x: make_bucket(x[feature], num_buck),
                   obj_count=1)
         .groupby('bucket', as_index=False)
         .agg({target: 'sum', 'obj_count': 'sum', feature: 'mean'})
@@ -132,8 +168,7 @@ def aggregate_data_for_woe_stab(df, feature, target,
     return (
         df.loc[lambda x: x[[date, target]].notnull().all(axis=1)]
         .loc[:, [feature, target, date]]
-        .assign(bucket=lambda x: pd.qcut(x[feature], q=num_buck,
-                                         duplicates='drop'),
+        .assign(bucket=lambda x: make_bucket(x[feature], num_buck),
                 obj_count=1)
         .groupby(['bucket', pd.TimeGrouper(key=date, freq=date_freq)])
         .agg({target: 'sum', 'obj_count': 'sum'})
@@ -156,6 +191,44 @@ def aggregate_data_for_woe_stab(df, feature, target,
         .assign(woe_u=lambda x: x['woe_hi'] - x['woe'],
                 woe_b=lambda x: x['woe'] - x['woe_lo'])
     )
+
+
+def aggregate_data_for_distribution(df, feature, date,
+                                    num_buck, date_freq):
+    return (
+        df.loc[:, [feature, date]]
+        .assign(bucket=lambda x: make_bucket(x[feature], num_buck),
+                obj_count=1)
+        .groupby(['bucket', pd.TimeGrouper(key=date, freq=date_freq)])
+        .agg({'obj_count': 'sum'})
+        .pipe(lambda x:  # заполняем нулями все не появившееся значения
+              x.reindex(pd.MultiIndex.from_product(x.index.levels,
+                                                   names=x.index.names),
+                        fill_value=0))
+        .reset_index()
+        .assign(
+            obj_total=lambda x: (
+                x.groupby(pd.TimeGrouper(key=date, freq=date_freq))
+                ['obj_count'].transform('sum')))
+        .assign(obj_rate=lambda x: x['obj_count'] / x['obj_total'])
+        .sort_values([date, 'bucket'])
+        .reset_index(drop=True)
+        .assign(objects_rate=lambda x:
+                x.groupby('dt').apply(
+                    lambda y: y.obj_rate.cumsum()).reset_index(drop=True))
+        .assign(obj_rate_u=0,
+                obj_rate_l=lambda x: x['obj_rate'])
+    )
+
+
+def make_bucket(series, num_bucket):
+    bucket = np.round(series.rank(pct=True) * num_bucket).fillna(-1)
+    agg = series.groupby(bucket).agg(['min', 'max'])
+    names = agg['min'].astype(str).copy()
+    names[agg['min'] != agg['max']] = ('[' + agg['min'].astype(str) +
+                                       '; ' + agg['max'].astype(str) + ']')
+    names.loc[-1] = 'missing'
+    return bucket.map(names.to_dict())
 
 
 def woe(tr, tr_all):
