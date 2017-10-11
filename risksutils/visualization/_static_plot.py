@@ -27,15 +27,15 @@ def woe_line(df, feature, target, num_buck=10):
     df_agg = aggregate_data_for_woe_line(df, feature, target, num_buck)
 
     scatter = hv.Scatter(data=df_agg, kdims=[feature],
-                         vdims=['woe'], group='Weight of evidence',
-                         label=feature).opts(plot=dict(show_legend=False))
+                         vdims=['woe'], group='Weight of evidence').opts(
+                             plot=dict(show_legend=False))
     errors = hv.ErrorBars(data=df_agg, kdims=[feature],
                           vdims=['woe', 'woe_u', 'woe_b'],
-                          group='Confident Intervals',
-                          label=feature).opts(plot=dict(show_legend=False))
+                          group='Confident Intervals').opts(
+                              plot=dict(show_legend=False))
     line = hv.Curve(data=df_agg, kdims=[feature], vdims=['logreg'],
-                    group='Logistic interpolations',
-                    label=feature).opts(plot=dict(show_legend=False))
+                    group='Logistic interpolations').opts(
+                        plot=dict(show_legend=False))
     diagram = hv.Overlay(items=[scatter, errors, line],
                          group='Woe line',
                          label=feature)
@@ -71,12 +71,10 @@ def woe_stab(df, feature, target, date, num_buck=10, date_freq='MS'):
                       vdims=['woe', 'woe_b', 'woe_u'])
     confident_intervals = (data.to.spread(kdims=[date],
                                           vdims=['woe', 'woe_b', 'woe_u'],
-                                          group='Confident Intervals',
-                                          label=feature)
+                                          group='Confident Intervals')
                            .overlay('bucket'))
     woe_curves = (data.to.curve(kdims=[date], vdims=['woe'],
-                                group='Weight of evidence',
-                                label=feature)
+                                group='Weight of evidence')
                   .overlay('bucket'))
     diagram = hv.Overlay(items=[confident_intervals * woe_curves],
                          group='Woe Stab',
@@ -138,11 +136,10 @@ def isotonic(df, predict, target, calibrations_data=None):
 
     confident_intervals = (hv.Area(df_agg, kdims=['predict'],
                                    vdims=['ci_l', 'ci_h'],
-                                   group='Confident Intervals',
-                                   label=predict)
+                                   group='Confident Intervals')
                            .opts(style=dict(alpha=0.5)))
     curve = hv.Curve(df_agg, kdims=['predict'], vdims=['isotonic'],
-                     group='Isotonic', label=predict)
+                     group='Isotonic')
 
     if calibrations_data is not None and target in calibrations_data.columns:
         calibration = hv.Curve(

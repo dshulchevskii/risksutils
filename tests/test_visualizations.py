@@ -27,9 +27,9 @@ foo,bar
     graphics = woe_line(df, 'foo', 'bar', num_buck=2)
 
     expected_result = """:Overlay
-   .Weight_of_evidence.Foo      :Scatter   [foo]   (woe)
-   .Confident_Intervals.Foo     :ErrorBars   [foo]   (woe,woe_u,woe_b)
-   .Logistic_interpolations.Foo :Curve   [foo]   (logreg)"""
+   .Weight_of_evidence.I      :Scatter   [foo]   (woe)
+   .Confident_Intervals.I     :ErrorBars   [foo]   (woe,woe_u,woe_b)
+   .Logistic_interpolations.I :Curve   [foo]   (logreg)"""
 
     assert repr(graphics) == expected_result
 
@@ -58,9 +58,9 @@ a,0,2015-2-1
     graphics = woe_stab(df, 'foo', 'bar', 'dt', num_buck=2)
 
     expected_result = """:Overlay
-   .Confident_Intervals.Foo :NdOverlay   [bucket]
+   .Confident_Intervals.I :NdOverlay   [bucket]
       :Spread   [dt]   (woe,woe_b,woe_u)
-   .Weight_of_evidence.Foo  :NdOverlay   [bucket]
+   .Weight_of_evidence.I  :NdOverlay   [bucket]
       :Curve   [dt]   (woe)"""
 
     assert repr(graphics) == expected_result
@@ -118,13 +118,13 @@ def test_isotonic_simple():
     graphics_clbr = isotonic(df, 'predict', 'target', calibrations)
 
     expected_result_clbr = """:Overlay
-   .Isotonic.Predict            :Curve   [predict]   (isotonic)
-   .Confident_Intervals.Predict :Area   [predict]   (ci_l,ci_h)
-   .Calibration.Calibration     :Curve   [predict]   (target)"""
+   .Isotonic.I              :Curve   [predict]   (isotonic)
+   .Confident_Intervals.I   :Area   [predict]   (ci_l,ci_h)
+   .Calibration.Calibration :Curve   [predict]   (target)"""
 
     expected_result = """:Overlay
-   .Isotonic.Predict            :Curve   [predict]   (isotonic)
-   .Confident_Intervals.Predict :Area   [predict]   (ci_l,ci_h)"""
+   .Isotonic.I            :Curve   [predict]   (isotonic)
+   .Confident_Intervals.I :Area   [predict]   (ci_l,ci_h)"""
 
     assert repr(graphics_clbr) == expected_result_clbr
     assert repr(graphics) == expected_result
