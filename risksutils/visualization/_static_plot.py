@@ -26,33 +26,19 @@ def woe_line(df, feature, target, num_buck=10):
     """
     df_agg = aggregate_data_for_woe_line(df, feature, target, num_buck)
 
-    # diagrams
-    scatter = hv.Scatter(
-        data=df_agg,
-        kdims=[feature],
-        vdims=['woe'],
-        group='Weight of evidence',
-        label=feature
-    ).opts(plot=dict(show_legend=False))
-    errors = hv.ErrorBars(
-        data=df_agg,
-        kdims=[feature],
-        vdims=['woe', 'woe_u', 'woe_b'],
-        group='Confident Intervals',
-        label=feature
-    ).opts(plot=dict(show_legend=False))
-    line = hv.Curve(
-        data=df_agg,
-        kdims=[feature],
-        vdims=['logreg'],
-        group='Logistic interpolations',
-        label=feature
-    ).opts(plot=dict(show_legend=False))
-    diagram = hv.Overlay(
-        items=[scatter, errors, line],
-        group='Woe line',
-        label=feature
-    )
+    scatter = hv.Scatter(data=df_agg, kdims=[feature],
+                         vdims=['woe'], group='Weight of evidence',
+                         label=feature).opts(plot=dict(show_legend=False))
+    errors = hv.ErrorBars(data=df_agg, kdims=[feature],
+                          vdims=['woe', 'woe_u', 'woe_b'],
+                          group='Confident Intervals',
+                          label=feature).opts(plot=dict(show_legend=False))
+    line = hv.Curve(data=df_agg, kdims=[feature], vdims=['logreg'],
+                    group='Logistic interpolations',
+                    label=feature).opts(plot=dict(show_legend=False))
+    diagram = hv.Overlay(items=[scatter, errors, line],
+                         group='Woe line',
+                         label=feature)
 
     return diagram
 
@@ -92,8 +78,10 @@ def woe_stab(df, feature, target, date, num_buck=10, date_freq='MS'):
                                 group='Weight of evidence',
                                 label=feature)
                   .overlay('bucket'))
-
-    return confident_intervals * woe_curves
+    diagram = hv.Overlay(items=[confident_intervals * woe_curves],
+                         group='Woe Stab',
+                         label=feature)
+    return diagram
 
 
 def distribution(df, feature, date, num_buck=10, date_freq='MS'):
@@ -169,8 +157,10 @@ def isotonic(df, predict, target, calibrations_data=None):
                      group='Isotonic', label=predict)
 
     if show_calibration:
-        return curve * confident_intervals * calibration
-    return curve * confident_intervals
+        return hv.Overlay(items=[curve, confident_intervals, calibration],
+                          group='Isotonic', label=predict)
+    return hv.Overlay(items=[curve, confident_intervals],
+                      group='Isotonic', label=predict)
 
 
 def aggregate_data_for_woe_line(df, feature, target, num_buck):
