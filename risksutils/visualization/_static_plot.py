@@ -136,18 +136,6 @@ def isotonic(df, predict, target, calibrations_data=None):
 
     df_agg = aggregate_data_for_isitonic(df, predict, target)
 
-    if calibrations_data is not None and target in calibrations_data.columns:
-        calibration = hv.Curve(
-            data=calibrations_data[['predict', target]].values,
-            kdims=['predict'],
-            vdims=['target'],
-            group='Calibration',
-            label='calibration'
-        )
-        show_calibration = True
-    else:
-        show_calibration = False
-
     confident_intervals = (hv.Area(df_agg, kdims=['predict'],
                                    vdims=['ci_l', 'ci_h'],
                                    group='Confident Intervals',
@@ -156,7 +144,14 @@ def isotonic(df, predict, target, calibrations_data=None):
     curve = hv.Curve(df_agg, kdims=['predict'], vdims=['isotonic'],
                      group='Isotonic', label=predict)
 
-    if show_calibration:
+    if calibrations_data is not None and target in calibrations_data.columns:
+        calibration = hv.Curve(
+            data=calibrations_data[['predict', target]].values,
+            kdims=['predict'],
+            vdims=['target'],
+            group='Calibration',
+            label='calibration'
+        )
         return hv.Overlay(items=[curve, confident_intervals, calibration],
                           group='Isotonic', label=predict)
     return hv.Overlay(items=[curve, confident_intervals],
@@ -259,12 +254,14 @@ def aggregate_data_for_distribution(df, feature, date,
 
 def make_bucket(series, num_bucket):
     bucket = np.ceil(series.rank(pct=True) * num_bucket).fillna(-1)
+    bucket = pd.Categorical(bucket, categories=np.sort(bucket.unique()),
+                            ordered=True)
     agg = series.groupby(bucket).agg(['min', 'max'])
     names = agg['min'].astype(str).copy()
     names[agg['min'] != agg['max']] = ('[' + agg['min'].astype(str) +
                                        '; ' + agg['max'].astype(str) + ']')
-    names.loc[-1] = 'missing'
-    return bucket.map(names.to_dict())
+    names[agg['min'].isnull()] = 'missing'
+    return bucket.rename_categories(names)
 
 
 def woe(tr, tr_all):
