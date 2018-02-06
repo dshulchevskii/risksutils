@@ -12,8 +12,8 @@ setup(
     license='MIT',
     classifiers=[
         'Development Status :: 3 - Alpha',
-        'Intended Audience :: Data Scientists',
-        'License :: MIT License',
+        'Intended Audience :: Financial and Insurance Industry',
+        'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.6',
     ],
     keywords='woe credit scoring information-value visualization',
