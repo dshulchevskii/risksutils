@@ -269,10 +269,8 @@ def _aggregate_data_for_woe_line(df, feature, target, num_buck):
         ('log_reg', LogisticRegression(C=1))
     ])
     clf.fit(df[[feature]], df[target])
-    df_agg['logreg'] = (
-        logit(clf.predict_proba(df_agg[[feature]])[:, 1]) -
-        logit(df[target].mean())
-    )
+    df_agg['logreg'] = _woe(clf.predict_proba(df_agg[[feature]])[:, 1],
+                            np.repeat(df[target].mean(), df_agg.shape[0]))
 
     return df_agg
 
