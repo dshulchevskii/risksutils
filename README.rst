@@ -13,7 +13,7 @@
 
 Для установки воспользуйтесь pip::
 
-    pip install git+https://github.com/dshulchevskii/risksutils
+    pip install risksutils
 
 
 .. |TravisImage| image:: https://travis-ci.org/dshulchevskii/risksutils.svg?branch=master
