@@ -336,21 +336,50 @@ def _aggregate_data_for_distribution(df, feature, date,
 
 
 def _make_bucket(series, num_buck):
-    if np.issubdtype(series.dtype, np.number):
-        bucket = pd.qcut(series, q=num_buck, duplicates='drop')
-        bucket = bucket.cat.add_categories(['missing'])
-        bucket[bucket.isnull()] = 'missing'
-        return bucket
-
     bucket = np.ceil(series.rank(pct=True) * num_buck).fillna(num_buck + 1)
     bucket = pd.Categorical(bucket, categories=np.sort(bucket.unique()),
                             ordered=True)
     agg = series.groupby(bucket).agg(['min', 'max'])
-    names = agg['min'].astype(str).copy()
-    names[agg['min'] != agg['max']] = ('[' + agg['min'].astype(str) +
-                                       '; ' + agg['max'].astype(str) + ']')
-    names[agg['min'].isnull()] = 'missing'
+
+    def _format_buck(row):
+        if row.name == num_buck + 1:
+            return 'missing'
+        elif row['min'] == row['max']:
+            return _format_val(row['min'])
+        return '[{}; {}]'.format(
+            _format_val(row['min']),
+            _format_val(row['max'])
+        )
+
+    names = agg.apply(_format_buck, axis=1)
     return bucket.rename_categories(names.to_dict())
+
+
+def _format_val(x, precision=3):
+    """format a value for _make_buck
+
+    >>> _format_val(0.00001)
+    '1e-05'
+    >>> _format_val(2.00001)
+    '2.0'
+    >>> _format_val(1000.0)
+    '1000'
+    >>> _format_val('foo')
+    'foo'
+    """
+    if isinstance(x, float):
+        if np.equal(np.mod(x, 1), 0):
+            return '%d' % x
+        elif not np.isfinite(x):
+            return '%s' % x
+        else:
+            frac, whole = np.modf(x)
+            if whole == 0:
+                digits = -int(np.floor(np.log10(abs(frac)))) - 1 + precision
+            else:
+                digits = precision
+            return '%s' % np.around(x, digits)
+    return '%s' % x
 
 
 def _woe(tr, tr_all):

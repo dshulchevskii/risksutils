@@ -144,18 +144,18 @@ foo,bar,target
     # can do html representation
     result._repr_html_()  # pylint: disable=protected-access
     rates, counts = result
-    expected_rates = ('bar              a     b   All\n'
-                      'foo                           \n'
-                      '(0.999, 3.0]  0.33   NaN  0.33\n'
-                      '(3.0, 5.0]     NaN  1.00  1.00\n'
-                      'missing        NaN  0.00  0.00\n'
-                      'All           0.33  0.67  0.50')
-    expected_counts = ('bar           a  b  All\n'
-                       'foo                    \n'
-                       '(0.999, 3.0]  3  0    3\n'
-                       '(3.0, 5.0]    0  2    2\n'
-                       'missing       0  1    1\n'
-                       'All           3  3    6')
+    expected_rates = ('bar         a     b   All\n'
+                      'foo                      \n'
+                      '[1; 2]   0.50   NaN  0.50\n'
+                      '[3; 5]   0.00  1.00  0.67\n'
+                      'missing   NaN  0.00  0.00\n'
+                      'All      0.33  0.67  0.50')
+    expected_counts = ('bar      a  b  All\n'
+                       'foo               \n'
+                       '[1; 2]   2  0    2\n'
+                       '[3; 5]   1  2    3\n'
+                       'missing  0  1    1\n'
+                       'All      3  3    6')
     with pd.option_context('display.precision', 2):
         assert repr(rates.data) == expected_rates
         assert repr(counts.data) == expected_counts
@@ -165,9 +165,9 @@ foo,bar,target
                                                num_buck2=2, compute_iv=True)
     expected_iv = ('           IV\n'
                    'feature      \n'
-                   'foo      7.12\n'
+                   'foo      2.53\n'
                    'bar      0.46\n'
-                   'foo bar  7.12')
+                   'foo bar  9.19')
     with pd.option_context('display.precision', 2):
         assert repr(rates.data) == expected_rates
         assert repr(counts.data) == expected_counts
