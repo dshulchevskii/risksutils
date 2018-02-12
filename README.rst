@@ -5,6 +5,7 @@
 |ReadTheDocs|_
 |TravisImage|_
 |Coverage|_
+|Pypi|_
 
 В данном проекте содержится набор скриптов полезных в скоринге.
 
@@ -24,3 +25,5 @@
 .. |ReadTheDocs| image:: https://readthedocs.org/projects/risksutils/badge/?version=latest
 .. |GitHub| image:: https://img.shields.io/badge/github--green.svg
 .. _GitHub: https://github.com/dshulchevskii/risksutils
+.. |Pypi| image:: https://badge.fury.io/py/risksutils.svg
+.. _Pypi: https://badge.fury.io/py/risksutils
