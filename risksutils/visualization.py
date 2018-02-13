@@ -17,23 +17,77 @@ def _set_options(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         diagramm = func(*args, **kwargs)
-        if any(backend in hv.Store._options  # pylint: disable=protected-access
-               for backend in ['matplotlib', 'bokeh']):
-            return diagramm.opts(matplotlib_opts)
+        for bnd, opts in [('matplotlib', matplotlib_opts),
+                          ('bokeh', bokeh_opts)]:
+            if (bnd in hv.Store._options  # pylint: disable=protected-access
+                    and bnd == hv.Store.current_backend):
+                return diagramm.opts(opts)
         return diagramm
     return wrapper
 
 
+colors = hv.Cycle([  # pylint: disable=invalid-name
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+    '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'])
+
+
 matplotlib_opts = {  # pylint: disable=invalid-name
-    'Scatter.Weight_of_evidence': dict(plot=dict(show_grid=True)),
-    'Curve.Isotonic': dict(plot=dict(show_grid=True)),
-    'NdOverlay.Objects_rate': dict(plot=dict(xrotation=45, legend_cols=1,
-                                             legend_position='right')),
-    'Spread.Objects_rate': dict(plot=dict(show_legend=True)),
-    'Overlay.Woe_Stab': dict(plot=dict(legend_position='right')),
-    'Spread.Confident_Intervals': dict(plot=dict(show_grid=True,
-                                                 xrotation=45)),
-    'Area.Confident_Intervals': dict(style=dict(alpha=0.5)),
+    'Scatter.Weight_of_evidence': {                  # woe_line
+        'plot': dict(show_grid=True),
+    },
+    'NdOverlay.Objects_rate': {                      # distribution
+        'plot': dict(xrotation=45, legend_cols=1, legend_position='right'),
+    },
+    'Spread.Objects_rate': {                         # distribution
+        'plot': dict(show_legend=True, show_grid=True),
+        'style': dict(facecolor=colors),
+    },
+    'Overlay.Woe_Stab': {                            # woe_stab
+        'plot': dict(legend_position='right'),
+    },
+    'Curve.Weight_of_evidence': {                    # woe_stab
+        'style': dict(color=colors),
+    },
+    'Spread.Confident_Intervals': {                  # woe_stab
+        'plot': dict(show_grid=True, xrotation=45),
+        'style': dict(facecolor=colors, alpha=0.3),
+    },
+    'Curve.Isotonic': {                              # isotonic
+        'plot': dict(show_grid=True),
+    },
+    'Area.Confident_Intervals': {                    # isotonic
+        'style': dict(alpha=0.5),
+    },
+}
+
+bokeh_opts = {  # pylint: disable=invalid-name
+    'Scatter.Weight_of_evidence': {                  # woe_line
+        'plot': dict(show_grid=True, tools=['hover']),
+    },
+    'NdOverlay.Objects_rate': {                      # distribution
+        'plot': dict(xrotation=45, legend_position='right', width=450),
+    },
+    'Spread.Objects_rate': {                         # distribution
+        'plot': dict(show_legend=True, show_grid=True, tools=['hover']),
+        'style': dict(color=colors),
+    },
+    'Overlay.Woe_Stab': {                            # woe_stab
+        'plot': dict(legend_position='right', width=450),
+    },
+    'Curve.Weight_of_evidence': {                    # woe_stab
+        'plot': dict(tools=['hover']),
+        'style': dict(color=colors),
+    },
+    'Spread.Confident_Intervals': {                  # woe_stab
+        'plot': dict(show_grid=True, xrotation=45),
+        'style': dict(color=colors, alpha=0.3),
+    },
+    'Curve.Isotonic': {                              # isotonic
+        'plot': dict(show_grid=True, tools=['hover']),
+    },
+    'Area.Confident_Intervals': {                    # isotonic
+        'style': dict(alpha=0.5),
+    },
 }
 
 
