@@ -14,7 +14,7 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda install pandas holoviews numpy scikit-learn scipy matplotlib bokeh statsmodels
+  - conda install pandas holoviews numpy scikit-learn scipy matplotlib bokeh
 
 script:
   - python ./setup.py test

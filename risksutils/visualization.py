@@ -9,7 +9,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.isotonic import IsotonicRegression
-from statsmodels.stats.proportion import proportion_confint
 
 
 def _set_options(func):
@@ -458,14 +457,13 @@ def _clopper_pearson(k, n, alpha=0.32):
     See also
     http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
 
-    >>> lo, hi = _clopper_pearson(np.array([0, 2]), np.array([2, 2]))
-    >>> lo[0]
-    0.0
+    >>> _clopper_pearson(0, 2)
+    (0.0, 0.6)
     """
     lo = beta.ppf(alpha / 2, k, n - k + 1)
     hi = beta.ppf(1 - alpha / 2, k + 1, n - k)
-    lo[np.isnan(lo)] = 0
-    hi[np.isnan(hi)] = 1
+    lo = np.nan_to_num(lo)
+    hi = 1 - np.nan_to_num(1 - hi)
     return lo, hi
 
 
@@ -492,14 +490,11 @@ def _aggregate_data_for_isitonic(df, predict, target):
 
 def _compute_confident_intervals(df):
     """Добавляем в таблицу доверительные интервалы"""
-    df['ci_l'], df['ci_h'] = proportion_confint(
-        count=df['target']['sum'],
-        nobs=df['target']['count'],
+    df['ci_l'], df['ci_h'] = _clopper_pearson(
+        k=df['target']['sum'],
+        n=df['target']['count'],
         alpha=0.05,
-        method='beta'
     )
-    df['ci_l'] = df['ci_l'].fillna(0)
-    df['ci_h'] = df['ci_h'].fillna(1)
     return df
 
 
@@ -651,7 +646,7 @@ def _iv_for_cross_tab(rates, counts):
     )
 
 
-Plot = namedtuple('Plot', ['selector', 'diagram'])
+_Plot = namedtuple('Plot', ['selector', 'diagram'])
 
 
 class InteractiveIsotonic():
@@ -711,7 +706,7 @@ class InteractiveIsotonic():
             selector = (hv.streams
                         .Selection1D(source=diagram)
                         .rename(index=dim))
-            self._diagrams[dim] = Plot(selector, diagram)
+            self._diagrams[dim] = _Plot(selector, diagram)
 
     def _make_area_static(self):
         """Создаем диаграммы с выбором диапозона дат"""
@@ -721,7 +716,7 @@ class InteractiveIsotonic():
             selector = (hv.streams
                         .BoundsX(source=diagram)
                         .rename(boundsx=dim))
-            self._diagrams[dim] = Plot(selector, diagram)
+            self._diagrams[dim] = _Plot(selector, diagram)
 
     def _conditions(self, **kwargs):
         """Извлекаем все уловия для подвыборки из статичных диаграмм"""
