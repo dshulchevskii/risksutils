@@ -4,33 +4,67 @@ import statsmodels.formula.api as smf
 from scipy.interpolate import interp1d
 
 
-def recalibration(data, features, target, target_calibration=None,
-                  calibration_data=None, offset=None, use_bias=True):
+def recalibration(df, features, target, target_calibration=None,
+                  calibrations_data=None, offset=None, use_bias=True):
+    """Построение логистической регрессии с калибровкой
 
-    kw = {}
+    Обычная лог регрессия строится зависимость прогноза вероятности
+    от линейной комбинации признаков в виде
+        prob = 1 / (1 + exp(- logit)).
+    В данной функции есть возможность добавить кусочно линейное
+    преобразование в конце - calibration
+        prob = calibration[1 / (1 + exp(- logit))].
+
+    При обучении линейной комбинации признаков для расчета logit
+    можно добавить к ним снос (offset), который не будет обучаться
+
+    Аргументы:
+      df: pandas.DataFrame
+        таблица с данными
+      features: list или str
+        набор признаков в виде списка название полей, например
+            ['f0', 'f1', 'f2', 'f3']
+        или описание столбцов в виде patsy формулы, например
+            'f0 + f1 + C(f2) + I(np.log(f3))'
+        в данном случае f2 - будет категориальным признаком,
+        а от f3 будет взят логарифм
+      target: str
+        название целевой переменной
+      target_calibration:
+        название целевой переменной в которую нужно будет
+        калибровать формулу
+      calibrations_data: pandas.DataFrame
+        таблица с соотношением калибровок вероятностей
+        должна содержать столбцы target_calibration и target
+      offset: str
+        название поля для сноса
+      use_bias: bool
+        нужно ли обучать константу
+    """
+
+    kwargs = {}
     if offset:
-        kw[offset] = data[offset]
+        kwargs[offset] = df[offset]
 
     if target_calibration:
-        short = calibration_data[target].values
-        long = calibration_data[target_calibration].values
-        family = create_family(short=short, long=long)
+        short = calibrations_data[target].values
+        long = calibrations_data[target_calibration].values
+        family = _create_family(short=short, long=long)
     else:
         family = sm.families.Binomial()
 
     features = features if isinstance(features, str) else " + ".join(features)
+    use_bias = "" if use_bias else " - 1"
     formula = '{target} ~ {features} {use_bias}'.format(
-        target=target,
-        features=features,
-        use_bias="" if use_bias else " - 1"
-    )
-    model = smf.glm(formula, data, family=family, **kw)
+        target=target, features=features, use_bias=use_bias)
+
+    model = smf.glm(formula, df, family=family, **kwargs)
     model = model.fit()
 
     return model
 
 
-class Interpolation(sm.families.links.Link):
+class _Interpolation(sm.families.links.Link):
 
     def __init__(self, x, y):
         self._call = interp1d(x, y)
@@ -49,7 +83,7 @@ class Interpolation(sm.families.links.Link):
         return np.zeros_like(p)
 
 
-class Composition(sm.families.links.Link):
+class _Composition(sm.families.links.Link):
 
     def __init__(self, f, g):
         self.f = f
@@ -70,14 +104,14 @@ class Composition(sm.families.links.Link):
 
     def deriv2(self, p):
         f, g = self.f, self.g
-        return (f.deriv(g(p)) * g.deriv2(p) + f.deriv2(g(p)) * g.deriv(p) ** 2)
+        return f.deriv(g(p)) * g.deriv2(p) + f.deriv2(g(p)) * g.deriv(p) ** 2
 
 
-def create_family(short, long):
-    class LogitAndInterpolation(Composition):
+def _create_family(short, long):
+    class LogitAndInterpolation(_Composition):
 
         def __init__(self):
-            interpolate = Interpolation(x=short, y=long)
+            interpolate = _Interpolation(x=short, y=long)
             logit = sm.families.links.logit()
             super().__init__(f=logit, g=interpolate)
 
