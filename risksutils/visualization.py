@@ -457,8 +457,8 @@ def _clopper_pearson(k, n, alpha=0.32):
     See also
     http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
 
-    >>> _clopper_pearson(0, 2)
-    (0.0, 0.6)
+    >>> _clopper_pearson(0, 10)
+    (0.0, 0.16744679259812678)
     """
     lo = beta.ppf(alpha / 2, k, n - k + 1)
     hi = beta.ppf(1 - alpha / 2, k + 1, n - k)
