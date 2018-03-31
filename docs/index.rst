@@ -5,6 +5,7 @@
    :caption: Содержание:
 
    visualisation.ipynb
+   calibrations.ipynb
    reference.rst
 
 .. only:: html

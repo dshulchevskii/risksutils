@@ -64,7 +64,7 @@ def recalibration(df, features, target, target_calibration=None,
 
     kwargs = {}
     if offset:
-        kwargs[offset] = df[offset]
+        kwargs['offset'] = df[offset]
 
     if target_calibration:
         short = calibrations_data[target].values
