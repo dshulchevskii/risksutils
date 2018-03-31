@@ -1,7 +1,7 @@
 import numpy as np
+from scipy.interpolate import interp1d
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
-from scipy.interpolate import interp1d
 
 
 def recalibration(df, features, target, target_calibration=None,
