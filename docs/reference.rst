@@ -6,3 +6,6 @@ Reference
 
 .. automodule:: risksutils.metrics
   :members:
+
+.. automodule:: risksutils.models
+  :members:
