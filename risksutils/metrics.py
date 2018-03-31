@@ -6,20 +6,25 @@ import pandas as pd
 def information_value(df, feature, target, num_buck=10):
     """information value признака с целевой переменной target
 
-    Аргументы:
-      df: pandas.DataFrame
+    **Аргументы**
+
+    df : pandas.DataFrame
         таблица с данными
-      feature: str
+
+    feature : str
         признак
-      trget: str
+
+    target : str
         целевая переменная
-      num_buck: numeric
+
+    num_buck : numeric
         количество бакетов
 
-    Результат:
-        information value: float
+    **Результат**
 
-    Пример использования
+    information value : float
+
+    **Пример использования**
 
     >>> import pandas as pd
     >>> df = pd.DataFrame({'foo': [1, 1, 1, np.nan, np.nan],
@@ -51,14 +56,16 @@ def information_value(df, feature, target, num_buck=10):
 def information_value_binormal(auc):
     """information value из бинормального приближения через AUC
 
-    Аргументы:
-      AUC: float
+    **Аргументы**
+
+    AUC : float
         Area Under Roc Curve
 
-    Результат:
-      information value: float
+    **Результат**
 
-    Пример использования
+    information value : float
+
+    **Пример использования**
 
     >>> information_value_binormal(0.5)
     0.0
@@ -69,22 +76,28 @@ def information_value_binormal(auc):
 def stability_index(df, feature, date, num_buck=10, date_freq='MS'):
     """Stability index для всех последовательных пар дат
 
-    Аргументы:
-      df: pandas.DataFrame
+    **Аргументы**
+
+    df : pandas.DataFrame
         таблица с данными
-      feature: str
+
+    feature : str
         признак
-      date: str
+
+    date : str
         название поля со временем
-      num_buck: numeric
+
+    num_buck : numeric
         количество бакетов
-      date_ferq: str
+
+    date_ferq : str
         Тип агрегации времени (по умолчанию 'MS' - начало месяца)
 
-    Результат:
-        pd.Series
+    **Результат**
 
-    Пример использования
+    pd.Series
+
+    **Пример использования**
 
     >>> df = pd.DataFrame({
     ...     'dt': pd.Series(['2000-01-01', '2000-01-01', '2000-01-01',

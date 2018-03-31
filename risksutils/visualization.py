@@ -94,18 +94,20 @@ bokeh_opts = {  # pylint: disable=invalid-name
 def woe_line(df, feature, target, num_buck=10):
     """График зависимости WoE от признака
 
-    Аргументы:
-      df: pandas.DataFrame
+    **Аргументы**
+
+    df : pandas.DataFrame
         таблица с данными
-      feature: str
+    feature : str
         название признака
-      target: str
+    target : str
         название целевой переменной
-      num_buck: int
+    num_buck : int
         количество бакетов
 
-    Результат:
-      scatter * errors * line: holoviews.Overlay
+    **Результат**
+
+    scatter * errors * line : holoviews.Overlay
     """
     df_agg = _aggregate_data_for_woe_line(df, feature, target, num_buck)
 
@@ -127,22 +129,29 @@ def woe_line(df, feature, target, num_buck=10):
 def woe_stab(df, feature, target, date, num_buck=10, date_freq='MS'):
     """График стабильности WoE признака по времени
 
-    Аргументы:
-      df: pandas.DataFrame
+    **Аргументы**
+
+    df : pandas.DataFrame
         таблица с данными
-      feature: str
+
+    feature : str
         название признака
-      target: str
+
+    target : str
         название целевой переменной
-      date: str
+
+    date : str
         название поля со временем
-      num_buck: int
+
+    num_buck : int
         количество бакетов
-      date_ferq: str
+
+    date_ferq : str
         Тип агрегации времени (по умолчанию 'MS' - начало месяца)
 
-    Результат:
-      curves * spreads: holoviews.Overlay
+    **Результат**
+
+    curves * spreads : holoviews.Overlay
     """
 
     df_agg = _aggregate_data_for_woe_stab(df, feature, target, date,
@@ -167,20 +176,26 @@ def woe_stab(df, feature, target, date, num_buck=10, date_freq='MS'):
 def distribution(df, feature, date, num_buck=10, date_freq='MS'):
     """График изменения распределения признака по времени
 
-    Аргументы:
-      df: pandas.DataFrame
+    **Аргументы**
+
+    df : pandas.DataFrame
         таблица с данными
-      feature: str
+
+    feature : str
         название признака
-      date: str
+
+    date : str
         название поля со временем
-      num_buck: int
+
+    num_buck : int
         количество бакетов
-      date_ferq: str
+
+    date_ferq : str
         Тип агрегации времени (по умолчанию 'MS' - начало месяца)
 
-    Результат:
-      spreads: holoviews.NdOverlay
+    **Результат**
+
+    spreads : holoviews.NdOverlay
     """
 
     df_agg = _aggregate_data_for_distribution(df, feature, date,
@@ -201,18 +216,23 @@ def distribution(df, feature, date, num_buck=10, date_freq='MS'):
 def isotonic(df, predict, target, calibrations_data=None):
     """Визуализация точности прогноза вероятности
 
-    Аргументы:
-      df: pandas.DataFrame
+    **Аргументы**
+
+    df : pandas.DataFrame
         таблица с данными
-      predict: str
+
+    predict : str
         прогнозная вероятность
-      target: str
+
+    target : str
         бинарная (0, 1) целевая переменная
-      calibrations_data: pandas.DataFrame
+
+    calibrations_data : pandas.DataFrame
         таблица с калибровками
 
-    Результат:
-        area * curve * [curve] : holoviews.Overlay
+    **Результат**
+
+    area * curve * [curve] : holoviews.Overlay
     """
 
     df_agg = _aggregate_data_for_isitonic(df, predict, target)
@@ -242,27 +262,36 @@ def cross_tab(df, feature1, feature2, target,
               compute_iv=False):
     """Кросстабуляция пары признаков и бинарной целевой переменной
 
-    Аргументы:
-      df: pandas.DataFrame
+    **Аргументы**
+
+    df : pandas.DataFrame
         таблица с данными
-      feature1: str
+
+    feature1 : str
         название признака 1
-      feature2: str
+
+    feature2 : str
         название признака 2
-      target: str
+
+    target : str
         название целевой переменной
-      num_buck1: int
+
+    num_buck1 : int
         количество бакетов для признака 1
-      num_buck2: int
+
+    num_buck2 : int
         количество бакетов для признака 2
-      min_sample: int
+
+    min_sample : int
         минимальное количество наблюдений для
         отображение доли целевой переменной в ячейке
-      compute_iv: bool
+
+    compute_iv : bool
         нужно ли рассчитывать information value для признаков
 
-    Результат:
-      (rates, counts): (pandas.Styler, pandas.Styler)
+    **Результат**
+
+    (rates, counts) : (pandas.Styler, pandas.Styler)
     """
 
     f1_buck, f2_buck, target = (
@@ -650,28 +679,68 @@ _Plot = namedtuple('Plot', ['selector', 'diagram'])
 
 
 class InteractiveIsotonic():
-    """Интерактивная визуализация точности прогноза вероятности"""
+    """Интерактивная визуализация точности прогноза вероятности
+
+    **Аргументы**
+
+    data : pandas.DataFrame
+        таблица с данными
+
+    pdims : list
+        список названий столбцов с предсказаниями
+
+    tdims : list
+        список названий столбцов с целевыми переменными
+
+    ddims : list
+        список названий столбцов с датами
+
+    gdims : list
+        список названий столбцов с категориальными полями
+
+    calibrations_data : pandas.DataFrame
+        таблица содержащая калибровки прогноза
+        в целевые переменных tdims
+        должна содержать столбец c именем predict
+        ::
+            tdims = ['t1', 't2']
+            calibrations_data = pd.DataFrame({
+                'predict': [0, 0.3, 0.6],
+                't1': [0, 0.1, 0.2],
+                't2': [0, 0.4, 0.8]
+            })
+        если аргумент задан, то на диаграммах isotonic
+        будут присутствовать графики калибровок
+
+    **Результат**
+
+    diagram
+        объект с набором связанных интерактивных диаграмм
+
+        isotonic : hv.DynamicMap
+            зависимость частоты наступления события
+            от прогноза. Содержит виджеты для каждого
+            выбора прогноза (pdims) и для выбора целевой
+            переменной (tdims)
+        обращаться к диаграммам нужно, как к атрибутам
+        ::
+            diagram.isotonic
+
+        доступны диаграммы для категориальных полей, указанных
+        в gdims, и для временных, указанных в ddims
+        обращаться к ним можно по имени, например
+        ::
+            ddims = ['request_dt', 'response_dt']
+            diagram.request_dt
+            diagram.response_dt
+        на данных диаграммах можно указать подвыборку, с помощью
+        виджетов диаграмм bokeh, тогда пересчитаются и все
+        оставшиеся диаграммы
+
+    """
 
     def __init__(self, data, pdims, tdims, ddims=None, gdims=None,
                  calibrations_data=None):
-        """Интерактивная визуализация точности прогноза вероятности
-
-        Аргументы:
-          data: pandas.DataFrame
-            таблица с данными
-          pdims: list
-            список названий столбцов с предсказаниями
-          tdims: list
-            целевые переменные
-          ddims: list
-            даты
-          gdims: list
-            категорияльные поля
-
-        Результат:
-            InteractiveIsotonic - объект с набором
-            интерактивных диаграмм
-        """
         self.data = data
         self._pdims = pdims
         self._tdims = tdims
@@ -709,7 +778,7 @@ class InteractiveIsotonic():
             self._diagrams[dim] = _Plot(selector, diagram)
 
     def _make_area_static(self):
-        """Создаем диаграммы с выбором диапозона дат"""
+        """Создаем диаграммы с выбором диапазона дат"""
         for dim in self._ddims:
             df = self._get_count(dim)
             diagram = hv.Area(df, kdims=[dim], vdims=['count'])
@@ -719,7 +788,7 @@ class InteractiveIsotonic():
             self._diagrams[dim] = _Plot(selector, diagram)
 
     def _conditions(self, **kwargs):
-        """Извлекаем все уловия для подвыборки из статичных диаграмм"""
+        """Извлекаем все условия для подвыборки из статичных диаграмм"""
         conditions = np.repeat(True, len(self.data))  # Сначала задаем True
 
         for dim, value in kwargs.items():           # Название всех ограничений

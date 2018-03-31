@@ -9,37 +9,57 @@ def recalibration(df, features, target, target_calibration=None,
     """Построение логистической регрессии с калибровкой
 
     Обычная лог регрессия строится зависимость прогноза вероятности
-    от линейной комбинации признаков в виде
-        prob = 1 / (1 + exp(- logit)).
+    от линейной комбинации признаков в виде::
+        prob = 1 / (1 + exp(- logit))
     В данной функции есть возможность добавить кусочно линейное
-    преобразование в конце - calibration
-        prob = calibration[1 / (1 + exp(- logit))].
+    преобразование в конце - calibration::
+        prob = calibration(1 / (1 + exp(- logit)))
 
     При обучении линейной комбинации признаков для расчета logit
     можно добавить к ним снос (offset), который не будет обучаться
 
-    Аргументы:
-      df: pandas.DataFrame
+    **Аргументы**
+
+    df : pandas.DataFrame
         таблица с данными
-      features: list или str
+
+    features : list или str
         набор признаков в виде списка название полей, например
+        ::
             ['f0', 'f1', 'f2', 'f3']
         или описание столбцов в виде patsy формулы, например
+        ::
             'f0 + f1 + C(f2) + I(np.log(f3))'
         в данном случае f2 - будет категориальным признаком,
         а от f3 будет взят логарифм
-      target: str
+
+    target : str
         название целевой переменной
-      target_calibration:
+
+    target_calibration : str
         название целевой переменной в которую нужно будет
         калибровать формулу
-      calibrations_data: pandas.DataFrame
+
+    calibrations_data : pandas.DataFrame
         таблица с соотношением калибровок вероятностей
         должна содержать столбцы target_calibration и target
-      offset: str
+
+    offset : str
         название поля для сноса
-      use_bias: bool
+
+    use_bias : bool
         нужно ли обучать константу
+
+    **Результат**
+
+    model : statmodels.model
+        для просмотра результатов нужно выполнить
+        ::
+            model.summary()
+
+        коэффициенты доступны
+        ::
+            model.params
     """
 
     kwargs = {}
@@ -65,6 +85,15 @@ def recalibration(df, features, target, target_calibration=None,
 
 
 class _Interpolation(sm.families.links.Link):
+    """Кусочно линейная функция в виде класса Link
+       в методах определяем производные и обратные функции
+
+       **Аргументы**
+
+       x : np.array
+       y : np.array
+
+    """
 
     def __init__(self, x, y):
         self._call = interp1d(x, y)
@@ -84,6 +113,8 @@ class _Interpolation(sm.families.links.Link):
 
 
 class _Composition(sm.families.links.Link):
+    """Композиция двух функций composition(x) = f(g(x))
+       в методах определяем производные и обратные функции"""
 
     def __init__(self, f, g):
         self.f = f
