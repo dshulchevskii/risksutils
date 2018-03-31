@@ -30,6 +30,7 @@ setup(
         'scipy>=0.19.1',
         'matplotlib>=2.0.2',
         'bokeh>=0.12.10',
+        'statsmodels>=0.8.0',
     ],
     setup_requires=[
         "pytest-runner",
