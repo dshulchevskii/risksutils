@@ -2,6 +2,7 @@ language: python
 python:
   - 3.6
 install:
+  - easy_install --upgrade pip
   - pip install codecov
   - sudo apt-get update
   # We do this conditionally because it saves us some downloading if the
