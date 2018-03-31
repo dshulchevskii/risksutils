@@ -6,6 +6,7 @@
 |TravisImage|_
 |Coverage|_
 |Pypi|_
+|Binder|_
 
 В данном проекте содержится набор скриптов полезных в скоринге.
 
@@ -27,3 +28,6 @@
 .. _GitHub: https://github.com/dshulchevskii/risksutils
 .. |Pypi| image:: https://badge.fury.io/py/risksutils.svg
 .. _Pypi: https://badge.fury.io/py/risksutils
+
+.. |Binder| image:: https://mybinder.org/badge.svg 
+.. _Binder: https://mybinder.org/v2/gh/dshulchevskii/risksutils/develop?filepath=docs%2Fcalibrations.ipynb
