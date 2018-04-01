@@ -30,4 +30,4 @@
 .. _Pypi: https://badge.fury.io/py/risksutils
 
 .. |Binder| image:: https://mybinder.org/badge.svg 
-.. _Binder: https://mybinder.org/v2/gh/dshulchevskii/risksutils/develop?filepath=docs%2Fcalibrations.ipynb
+.. _Binder: https://mybinder.org/v2/gh/dshulchevskii/risksutils/master?filepath=docs
