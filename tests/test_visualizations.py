@@ -222,3 +222,28 @@ def test_inter_iso_simple():
             ':Overlay\n'
             '   .Area.I  :Area   [dt]   (count)\n'
             '   .Area.II :Area   [dt]   (count)')
+
+
+def test_cross_tab_reordering_trouble():
+    df = pd.DataFrame({
+        "foo": np.array([3, 1, 2, 0]),
+        "bar": np.array([30, 10, 20, 0]),
+        "target": np.array([0, 1, 1, 1])
+    })
+
+    rates, counts = cross_tab(df, 'foo', 'bar', 'target', min_sample=0,
+                              num_buck1=2, num_buck2=2)
+
+    expected_rates = ('bar     [0; 10]  [20; 30]   All\n'
+                      'foo                            \n'
+                      '[0; 1]      1.0       NaN  1.00\n'
+                      '[2; 3]      NaN       0.5  0.50\n'
+                      'All         1.0       0.5  0.75')
+    expected_counts = ('bar     [0; 10]  [20; 30]  All\n'
+                       'foo                           \n'
+                       '[0; 1]        2         0    2\n'
+                       '[2; 3]        0         2    2\n'
+                       'All           2         2    4')
+    with pd.option_context('display.precision', 2):
+        assert repr(rates.data) == expected_rates
+        assert repr(counts.data) == expected_counts
