@@ -106,6 +106,28 @@ b,2015-2-1
     """)
 
 
+def test_distribution_simple_2():
+    data = u"""
+foo,dt
+0,2015-1-1
+1,2015-1-1
+"""
+
+    df = pd.read_csv(StringIO(data), parse_dates=['dt'])
+    graphics = distribution(df, 'foo', 'dt', num_buck=10)
+
+    expected_result = """:NdOverlay   [bucket]
+   :Spread   [dt]   (objects_rate,obj_rate_l,obj_rate_u)"""
+
+    assert repr(graphics) == expected_result
+
+    assert repr(graphics.table().data == """
+    bucket         dt  objects_rate  obj_rate_l  obj_rate_u
+0        2 2015-01-01      0.500000    0.500000           0
+3        1 2015-01-01      0.500000    0.500000           0
+    """)
+
+
 def test_isotonic_simple():
     num_obs = 100
     np.random.seed(42)
