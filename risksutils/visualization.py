@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from collections import namedtuple
 from functools import wraps
 from scipy.stats import beta
@@ -159,11 +161,11 @@ def woe_stab(df, feature, target, date, num_buck=10, date_freq='MS'):
 
     data = hv.Dataset(df_agg, kdims=['bucket', date],
                       vdims=['woe', 'woe_b', 'woe_u'])
-    confident_intervals = (data.to.spread(kdims=[date],
+    confident_intervals = (data.to.spread(kdims=[date],  # pylint: disable=no-member
                                           vdims=['woe', 'woe_b', 'woe_u'],
                                           group='Confident Intervals')
                            .overlay('bucket'))
-    woe_curves = (data.to.curve(kdims=[date], vdims=['woe'],
+    woe_curves = (data.to.curve(kdims=[date], vdims=['woe'],  # pylint: disable=no-member
                                 group='Weight of evidence')
                   .overlay('bucket'))
     diagram = hv.Overlay(items=[confident_intervals * woe_curves],
@@ -201,7 +203,7 @@ def distribution(df, feature, date, num_buck=10, date_freq='MS'):
     df_agg = _aggregate_data_for_distribution(df, feature, date,
                                               num_buck, date_freq)
 
-    obj_rates = (hv.Dataset(df_agg, kdims=['bucket', date],
+    obj_rates = (hv.Dataset(df_agg, kdims=['bucket', date],  # pylint: disable=no-member
                             vdims=['objects_rate', 'obj_rate_l', 'obj_rate_u'])
                  .to.spread(kdims=[date],
                             vdims=['objects_rate', 'obj_rate_l', 'obj_rate_u'],
@@ -424,7 +426,7 @@ def _make_bucket(series, num_buck):
     def _format_buck(row):
         if row.name == num_buck + 1:
             return 'missing'
-        elif row['min'] == row['max']:
+        if row['min'] == row['max']:
             return _format_val(row['min'])
         return '[{}; {}]'.format(
             _format_val(row['min']),
@@ -450,15 +452,14 @@ def _format_val(x, precision=3):
     if isinstance(x, float):
         if np.equal(np.mod(x, 1), 0):
             return '%d' % x
-        elif not np.isfinite(x):
+        if not np.isfinite(x):
             return '%s' % x
+        frac, whole = np.modf(x)
+        if whole == 0:
+            digits = -int(np.floor(np.log10(abs(frac)))) - 1 + precision
         else:
-            frac, whole = np.modf(x)
-            if whole == 0:
-                digits = -int(np.floor(np.log10(abs(frac)))) - 1 + precision
-            else:
-                digits = precision
-            return '%s' % np.around(x, digits)
+            digits = precision
+        return '%s' % np.around(x, digits)
     return '%s' % x
 
 
@@ -555,7 +556,7 @@ def _rgb_to_hex(rgb):
     >>> _rgb_to_hex((222, 173, 19))
     '#dead13'
     """
-    return '#%02x%02x%02x' % (*rgb,)
+    return '#%02x%02x%02x' % tuple(rgb)
 
 
 def _color_interpolate(values, bounds_colors):
@@ -627,7 +628,7 @@ def _add_style_for_cross_tab(rates, counts):
     rates = (
         rates.style
         .applymap(lambda x: 'background-color: %s' % rates_colors[x]
-                  if x == x else '')
+                  if x == x else '')  # pylint: disable=comparison-with-itself
         .format("{:.2%}")
         .set_table_styles([rotate_col_heading_style])
     )
@@ -635,7 +636,7 @@ def _add_style_for_cross_tab(rates, counts):
     counts = (
         counts.style
         .applymap(lambda x: 'background-color: %s' % counts_colors[x]
-                  if x == x else '')
+                  if x == x else '')  # pylint: disable=comparison-with-itself
         .set_table_styles([rotate_col_heading_style])
     )
 

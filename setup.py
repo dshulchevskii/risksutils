@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from os.path import join, dirname
 from setuptools import setup
 import risksutils

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from io import StringIO
 import numpy as np
 import pandas as pd
@@ -10,7 +12,7 @@ from risksutils.visualization import (
 
 def test_woe_line_simple():
 
-    data = """
+    data = u"""
 foo,bar
 1,0
 1,1
@@ -36,7 +38,7 @@ foo,bar
 
 
 def test_woe_stab_simple():
-    data = """
+    data = u"""
 foo,bar,dt
 a,0,2015-1-1
 a,1,2015-1-1
@@ -69,7 +71,7 @@ a,0,2015-2-1
 
 
 def test_distribution_simple():
-    data = """
+    data = u"""
 foo,dt
 a,2015-1-1
 a,2015-1-1
@@ -93,8 +95,15 @@ b,2015-2-1
 
     assert repr(graphics) == expected_result
 
-    assert all(graphics.table().data['obj_rate'].values ==
-               np.array([0.5, 0.5, 0., 1 / 6, 0.5, 1 / 3]))
+    assert repr(graphics.table().data == """
+    bucket         dt  objects_rate  obj_rate_l  obj_rate_u
+0        a 2015-01-01      0.500000    0.500000           0
+3        a 2015-02-01      0.500000    0.500000           0
+1        b 2015-01-01      0.500000    0.000000           0
+4        b 2015-02-01      0.666667    0.166667           0
+2  missing 2015-01-01      1.000000    0.500000           0
+5  missing 2015-02-01      1.000000    0.333333           0
+    """)
 
 
 def test_isotonic_simple():
@@ -128,7 +137,7 @@ def test_isotonic_simple():
 
 
 def test_cross_tab_simple():
-    data = """
+    data = u"""
 foo,bar,target
 1,a,0
 2,a,1
