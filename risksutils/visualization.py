@@ -305,10 +305,16 @@ def cross_tab(df, feature1, feature2, target,
                          x[target]))
     )
 
-    rates = pd.crosstab(f1_buck, f2_buck, target, aggfunc=np.mean,
-                        margins=True, rownames=[feature1], colnames=[feature2])
-    counts = pd.crosstab(f1_buck, f2_buck, margins=True,
-                         rownames=[feature1], colnames=[feature2])
+    f1_buck_names = dict(zip(range(len(f1_buck)), f1_buck.categories))
+    f2_buck_names = dict(zip(range(len(f2_buck)), f2_buck.categories))
+
+    rates = (pd.crosstab(f1_buck.codes, f2_buck.codes, target, aggfunc=np.mean,
+                         margins=True, rownames=[feature1], colnames=[feature2])
+             .rename(index=f1_buck_names, columns=f2_buck_names))
+
+    counts = (pd.crosstab(f1_buck.codes, f2_buck.codes,
+                          margins=True, rownames=[feature1], colnames=[feature2])
+              .rename(index=f1_buck_names, columns=f2_buck_names))
 
     if compute_iv:
         information_val = _iv_for_cross_tab(rates, counts)
