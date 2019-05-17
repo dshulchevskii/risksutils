@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 from scipy.interpolate import interp1d
 import statsmodels.api as sm
@@ -144,7 +146,7 @@ def _create_family(short, long):
         def __init__(self):
             interpolate = _Interpolation(x=short, y=long)
             logit = sm.families.links.logit()
-            super().__init__(f=logit, g=interpolate)
+            super(LogitAndInterpolation, self).__init__(f=logit, g=interpolate)
 
     class Binomial(sm.families.Binomial):
         links = safe_links = [LogitAndInterpolation]

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import pandas as pd
 import numpy as np
 from scipy.special import expit
@@ -87,14 +89,19 @@ def test_interpolation():
 
 def test_composition():
 
-    pow2 = sm.families.links.Power(power=2)
-    pow3 = sm.families.links.Power(power=3)
-    pow6 = sm.families.links.Power(power=6)
+    pow2 = sm.families.links.Power(power=2.0)
+    pow3 = sm.families.links.Power(power=3.0)
+    pow6 = sm.families.links.Power(power=6.0)
 
     composition = _Composition(f=pow2, g=pow3)
 
     assert np.allclose(composition(0.9), pow6(0.9))
+    assert np.allclose(composition(0.9), 0.531441)
     assert np.allclose(composition.inverse(0.9), pow6.inverse(0.9))
+    assert np.allclose(composition.inverse(0.9), 0.9825931938526898)
     assert np.allclose(composition.deriv(0.9), pow6.deriv(0.9))
+    assert np.allclose(composition.deriv(0.9), 3.54294)
     assert np.allclose(composition.inverse_deriv(0.3), pow6.inverse_deriv(0.3))
+    assert np.allclose(composition.inverse_deriv(0.3), 0.45454934611112613)
     assert np.allclose(composition.deriv2(0.3), pow6.deriv2(0.3))
+    assert np.allclose(composition.deriv2(0.3), 0.243)

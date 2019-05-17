@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from io import StringIO
 import numpy as np
 import pandas as pd
@@ -10,7 +12,7 @@ from risksutils.visualization import (
 
 def test_woe_line_simple():
 
-    data = """
+    data = u"""
 foo,bar
 1,0
 1,1
@@ -36,7 +38,7 @@ foo,bar
 
 
 def test_woe_stab_simple():
-    data = """
+    data = u"""
 foo,bar,dt
 a,0,2015-1-1
 a,1,2015-1-1
@@ -69,7 +71,7 @@ a,0,2015-2-1
 
 
 def test_distribution_simple():
-    data = """
+    data = u"""
 foo,dt
 a,2015-1-1
 a,2015-1-1
@@ -135,7 +137,7 @@ def test_isotonic_simple():
 
 
 def test_cross_tab_simple():
-    data = """
+    data = u"""
 foo,bar,target
 1,a,0
 2,a,1

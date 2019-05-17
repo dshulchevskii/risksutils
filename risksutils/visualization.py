@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from collections import namedtuple
 from functools import wraps
 from scipy.stats import beta
@@ -554,7 +556,7 @@ def _rgb_to_hex(rgb):
     >>> _rgb_to_hex((222, 173, 19))
     '#dead13'
     """
-    return '#%02x%02x%02x' % (*rgb,)
+    return '#%02x%02x%02x' % tuple(rgb)
 
 
 def _color_interpolate(values, bounds_colors):
