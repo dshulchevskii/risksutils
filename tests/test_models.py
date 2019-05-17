@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 from scipy.special import expit
-from risksutils.models import recalibration, _Interpolation, _Composition
 import statsmodels.api as sm
+from risksutils.models import recalibration, _Interpolation, _Composition
 
 
 def generate_data(n):

@@ -93,8 +93,15 @@ b,2015-2-1
 
     assert repr(graphics) == expected_result
 
-    assert all(graphics.table().data['obj_rate'].values ==
-               np.array([0.5, 0.5, 0., 1 / 6, 0.5, 1 / 3]))
+    assert repr(graphics.table().data == """
+    bucket         dt  objects_rate  obj_rate_l  obj_rate_u
+0        a 2015-01-01      0.500000    0.500000           0
+3        a 2015-02-01      0.500000    0.500000           0
+1        b 2015-01-01      0.500000    0.000000           0
+4        b 2015-02-01      0.666667    0.166667           0
+2  missing 2015-01-01      1.000000    0.500000           0
+5  missing 2015-02-01      1.000000    0.333333           0
+    """)
 
 
 def test_isotonic_simple():
