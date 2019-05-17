@@ -417,7 +417,8 @@ def _aggregate_data_for_distribution(df, feature, date,
         .reset_index(drop=True)
         .assign(objects_rate=lambda x:
                 x.groupby(date).apply(
-                    lambda y: y.obj_rate.cumsum()).reset_index(drop=True))
+                    lambda y: y.obj_rate.cumsum().to_frame())
+                .reset_index(drop=True))
         .assign(obj_rate_u=0,
                 obj_rate_l=lambda x: x['obj_rate'])
     )
