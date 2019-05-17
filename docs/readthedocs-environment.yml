@@ -2,7 +2,7 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python==3.5
+  - python==3.5.2
   - sphinx>1.4
   - pandoc
   - nbconvert
